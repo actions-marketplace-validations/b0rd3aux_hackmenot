@@ -1,0 +1,64 @@
+id: RUST_INJ001
+name: SQL String Formatting
+severity: critical
+category: injection
+languages:
+  - rust
+pattern:
+  type: macro
+  names:
+    - "format!"
+    - "println!"
+    - "print!"
+  contains:
+    - "SELECT"
+    - "INSERT"
+    - "UPDATE"
+    - "DELETE"
+message: |
+  Potential SQL injection detected. Building SQL queries with string formatting
+  can allow attackers to inject malicious SQL code.
+
+  Never concatenate or format user input directly into SQL queries.
+fix: |
+  Use parameterized queries with a proper database library:
+
+  With sqlx:
+  ```rust
+  sqlx::query("SELECT * FROM users WHERE id = $1")
+      .bind(user_id)
+      .fetch_all(&pool)
+      .await?;
+  ```
+
+  With diesel:
+  ```rust
+  users.filter(id.eq(user_id))
+      .load::<User>(&conn)?;
+  ```
+
+  With rusqlite:
+  ```rust
+  conn.query_row(
+      "SELECT * FROM users WHERE id = ?1",
+      params![user_id],
+      |row| Ok(User { ... })
+  )?;
+  ```
+education: |
+  **Why AI makes this mistake:**
+  AI assistants frequently create SQL injection vulnerabilities because:
+  - String formatting seems like the simplest solution
+  - They don't always recognize user input that needs sanitization
+  - Example code from the web often shows unsafe patterns
+
+  **Impact:**
+  SQL injection allows attackers to:
+  - Read sensitive data from the database
+  - Modify or delete data
+  - Execute administrative operations
+  - In some cases, execute operating system commands
+
+  **Best practice:**
+  Always use parameterized queries (prepared statements) from your database library.
+  Never build SQL by concatenating strings, even if you think the input is trusted.

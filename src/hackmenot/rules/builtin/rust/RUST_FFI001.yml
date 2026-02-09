@@ -1,0 +1,79 @@
+id: RUST_FFI001
+name: Unsafe FFI
+severity: high
+category: ffi
+languages:
+  - rust
+pattern:
+  type: unsafe_block
+message: |
+  Unsafe block detected. If this involves FFI (Foreign Function Interface) with C code,
+  ensure all safety invariants are maintained at the boundary.
+
+  FFI requires careful handling of memory ownership, null pointers, and calling conventions.
+fix: |
+  Safe FFI practices:
+
+  1. Validate pointers from C:
+  ```rust
+  unsafe fn from_c_string(ptr: *const c_char) -> Option<String> {
+      if ptr.is_null() {
+          return None;
+      }
+      let c_str = CStr::from_ptr(ptr);
+      Some(c_str.to_string_lossy().into_owned())
+  }
+  ```
+
+  2. Handle C memory ownership:
+  ```rust
+  // If C allocates, you must free with C's free()
+  extern "C" {
+      fn get_data() -> *mut u8;
+      fn free_data(ptr: *mut u8);
+  }
+
+  unsafe {
+      let data = get_data();
+      // use data...
+      free_data(data); // Don't forget to free!
+  }
+  ```
+
+  3. Use repr(C) for types passed to C:
+  ```rust
+  #[repr(C)]
+  struct CData {
+      count: u32,
+      values: *mut f64,
+  }
+  ```
+
+  4. Document safety requirements:
+  ```rust
+  /// # Safety
+  /// - `data` must be a valid pointer to `len` bytes
+  /// - `data` must remain valid for the lifetime of the slice
+  unsafe fn from_raw_parts(data: *const u8, len: usize) -> &'static [u8] {
+      std::slice::from_raw_parts(data, len)
+  }
+  ```
+education: |
+  **Why AI makes this mistake:**
+  AI assistants struggle with FFI because:
+  - They don't understand C memory ownership conventions
+  - They forget to check for null pointers
+  - They don't consider lifetime and aliasing rules at the boundary
+
+  **Impact:**
+  Unsafe FFI can cause:
+  - Use-after-free (mixing Rust and C memory management)
+  - Null pointer dereferences
+  - Buffer overflows
+  - Undefined behavior from ABI mismatches
+  - Memory leaks (forgetting to free C allocations)
+
+  **Best practice:**
+  Isolate FFI in small, well-documented wrapper functions. Always validate pointers,
+  document ownership, use CStr/CString for strings, and use repr(C) for types
+  crossing the boundary. Consider using bindgen for safer bindings generation.

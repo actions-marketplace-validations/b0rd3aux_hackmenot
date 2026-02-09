@@ -1,0 +1,47 @@
+id: JAVA_REF001
+name: Unsafe Reflection
+severity: high
+category: reflection
+languages:
+  - java
+pattern:
+  type: method_invocation
+  names:
+    - "Class.forName"
+    - "Method.invoke"
+    - "Constructor.newInstance"
+message: |
+  Unsafe reflection detected. Using reflection with user-controlled input can allow
+  attackers to instantiate arbitrary classes or invoke arbitrary methods.
+
+  Reflection bypasses normal access controls and type safety, creating security risks.
+fix: |
+  1. Avoid reflection when possible - use polymorphism or factory patterns instead.
+
+  2. If reflection is necessary, use strict whitelisting:
+
+  Set<String> allowedClasses = Set.of(
+      "com.example.SafeClass1",
+      "com.example.SafeClass2"
+  );
+
+  if (!allowedClasses.contains(className)) {
+      throw new IllegalArgumentException("Class not allowed");
+  }
+
+  3. Validate method names with allowlists.
+
+  4. Use SecurityManager restrictions (if still available).
+education: |
+  **Why AI makes this mistake:**
+  AI assistants use reflection because it seems like a flexible solution for
+  dynamic behavior, without recognizing the security implications.
+
+  **Impact:**
+  Unsafe reflection can allow attackers to instantiate arbitrary classes,
+  invoke private methods, bypass security checks, execute arbitrary code,
+  or trigger deserialization gadget chains.
+
+  **Best practice:**
+  Avoid reflection when possible. If necessary, use strict whitelists of allowed
+  classes and methods. Never pass user input directly to Class.forName or Method.invoke.

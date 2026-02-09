@@ -1,0 +1,37 @@
+id: RUST_UNS001
+name: Unsafe Block Usage
+severity: high
+category: unsafe
+languages:
+  - rust
+pattern:
+  type: unsafe_block
+message: |
+  Unsafe block detected. Ensure all safety invariants are maintained.
+
+  Unsafe blocks bypass Rust's memory safety guarantees and require manual verification
+  that all operations maintain Rust's safety invariants (no dangling pointers, no data
+  races, no undefined behavior).
+fix: |
+  Review the unsafe block:
+  1. Document all safety invariants in comments
+  2. Ensure pointer aliasing rules are not violated
+  3. Verify lifetimes are correctly managed
+  4. Consider if a safe alternative exists
+  5. Minimize the scope of unsafe code
+education: |
+  **Why AI makes this mistake:**
+  AI coding assistants often suggest `unsafe` blocks when they encounter compiler
+  errors related to borrowing, lifetimes, or type conversions, without understanding
+  the deep implications. They may:
+  - Use unsafe as a quick fix for borrow checker errors
+  - Not understand Rust's memory safety invariants
+  - Copy unsafe patterns without verifying safety conditions
+
+  **Impact:**
+  Unsafe code can introduce memory corruption, use-after-free bugs, data races, and
+  undefined behavior - exactly the issues Rust is designed to prevent.
+
+  **Best practice:**
+  Only use unsafe when necessary, document all safety invariants, and minimize the
+  scope. Prefer safe abstractions from the standard library or well-audited crates.

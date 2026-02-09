@@ -1,0 +1,50 @@
+id: JAVA_CRY001
+name: Weak Hash Functions
+severity: medium
+category: crypto
+languages:
+  - java
+pattern:
+  type: method_invocation
+  names:
+    - "MessageDigest.getInstance"
+  args_contains:
+    - "MD5"
+    - "SHA-1"
+    - "SHA1"
+message: |
+  Weak cryptographic hash function detected. MD5 and SHA-1 are cryptographically
+  broken and should not be used for security purposes.
+
+  Both algorithms have known collision attacks and are not suitable for password
+  hashing, digital signatures, or certificate verification.
+fix: |
+  Use stronger hash algorithms:
+
+  For password hashing (preferred):
+  String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
+  boolean matches = BCrypt.checkpw(password, hashedPassword);
+
+  For general cryptographic hashing:
+  MessageDigest digest = MessageDigest.getInstance("SHA-256");
+  byte[] hash = digest.digest(data);
+
+  Or SHA-3:
+  MessageDigest digest = MessageDigest.getInstance("SHA3-256");
+
+  For non-cryptographic checksums:
+  MD5 may be acceptable if explicitly documented as non-security use.
+education: |
+  **Why AI makes this mistake:**
+  AI assistants suggest MD5 and SHA-1 because they appear in older tutorials,
+  have simple APIs, and AI doesn't distinguish between cryptographic and
+  non-cryptographic use.
+
+  **Impact:**
+  Using weak hashes for security leads to password cracking through rainbow tables,
+  digital signature forgery, certificate spoofing, and man-in-the-middle attacks.
+
+  **Best practice:**
+  For passwords: use BCrypt, Argon2, or PBKDF2 with high iteration counts.
+  For cryptographic hashing: use SHA-256 minimum (SHA-3 preferred).
+  For checksums: MD5/SHA-1 may be acceptable if clearly documented as non-security use.

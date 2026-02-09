@@ -1,0 +1,58 @@
+id: RUST_UNS002
+name: Raw Pointer Operations
+severity: critical
+category: unsafe
+languages:
+  - rust
+pattern:
+  type: call
+  names:
+    - "std::ptr::write"
+    - "std::ptr::read"
+    - "std::ptr::write_volatile"
+    - "std::ptr::read_volatile"
+    - "ptr::write"
+    - "ptr::read"
+    - "ptr::offset"
+    - "ptr::add"
+    - "ptr::sub"
+message: |
+  Raw pointer operation detected. These operations are highly unsafe and require
+  careful verification of all safety conditions.
+
+  Raw pointer operations can cause undefined behavior if:
+  - The pointer is null or dangling
+  - The pointer is not properly aligned
+  - The memory is not initialized for reads
+  - Multiple threads access without synchronization
+fix: |
+  Before using raw pointer operations:
+  1. Verify the pointer is non-null and properly aligned
+  2. Ensure the memory is valid for the operation (allocated, not freed)
+  3. For reads: ensure memory is initialized
+  4. For writes: ensure no simultaneous reads from other threads
+  5. Document why unsafe is necessary and what invariants you maintain
+
+  Consider safe alternatives:
+  - Use references (&T, &mut T) instead of raw pointers
+  - Use smart pointers (Box, Rc, Arc) for owned data
+  - Use slice operations instead of pointer arithmetic
+education: |
+  **Why AI makes this mistake:**
+  AI assistants may suggest raw pointer operations when:
+  - Interfacing with C code (FFI)
+  - Trying to work around the borrow checker
+  - Implementing low-level data structures
+
+  They often don't verify the necessary safety conditions or consider safe alternatives.
+
+  **Impact:**
+  Improper use of raw pointers can lead to:
+  - Segmentation faults and crashes
+  - Use-after-free vulnerabilities
+  - Data corruption
+  - Security vulnerabilities exploitable by attackers
+
+  **Best practice:**
+  Avoid raw pointers unless absolutely necessary. When required (e.g., FFI), isolate
+  unsafe code in small, well-documented functions with safe APIs.

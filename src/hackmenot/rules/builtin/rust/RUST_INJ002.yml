@@ -1,0 +1,62 @@
+id: RUST_INJ002
+name: Command Injection
+severity: high
+category: injection
+languages:
+  - rust
+pattern:
+  type: call
+  names:
+    - "Command::new"
+    - "std::process::Command::new"
+message: |
+  Potential command injection detected. Executing system commands with user-controlled
+  input can allow attackers to execute arbitrary commands.
+
+  Carefully validate and sanitize any user input passed to Command::new or its arguments.
+fix: |
+  1. Avoid shell execution - use Command::new directly:
+  ```rust
+  // Safe: no shell interpretation
+  Command::new("ls")
+      .arg("-la")
+      .arg(user_path)
+      .output()?;
+  ```
+
+  2. Never pass user input to shell commands:
+  ```rust
+  // UNSAFE: allows command injection
+  Command::new("sh")
+      .arg("-c")
+      .arg(format!("ls {}", user_input))  // DON'T DO THIS
+      .output()?;
+  ```
+
+  3. Validate input strictly:
+  - Use allowlists, not denylists
+  - Validate against expected patterns
+  - Reject any input with shell metacharacters
+
+  4. Consider safer alternatives:
+  - Use Rust libraries instead of external commands
+  - Hardcode command paths (don't let users specify commands)
+education: |
+  **Why AI makes this mistake:**
+  AI assistants create command injection risks by:
+  - Treating external commands as a convenient solution
+  - Not recognizing which inputs come from untrusted sources
+  - Using shell execution when it's not necessary
+
+  **Impact:**
+  Command injection allows attackers to:
+  - Execute arbitrary system commands
+  - Read/write/delete files
+  - Establish reverse shells
+  - Escalate privileges
+  - Compromise the entire system
+
+  **Best practice:**
+  Avoid external commands when possible. When necessary, use Command::new directly
+  (not through a shell), validate all inputs with strict allowlists, and never
+  pass user input to shell interpreters.

@@ -1,0 +1,71 @@
+id: JAVA_DES001
+name: Insecure Deserialization
+severity: critical
+category: deserialization
+languages:
+  - java
+pattern:
+  type: method_invocation
+  names:
+    - "readObject"
+    - "readUnshared"
+message: |
+  Insecure deserialization detected. Deserializing untrusted data can allow attackers
+  to execute arbitrary code, manipulate application logic, or cause denial of service.
+
+  This is a critical vulnerability (OWASP Top 10 2021 - A08:2021 Software and Data
+  Integrity Failures). Reference: CVE-2026-0603 (Hibernate).
+fix: |
+  1. Avoid deserializing untrusted data. Use safer alternatives:
+  ```java
+  // Use JSON with Jackson or Gson instead
+  ObjectMapper mapper = new ObjectMapper();
+  MyClass obj = mapper.readValue(jsonString, MyClass.class);
+  ```
+
+  2. If deserialization is required, use a whitelist filter:
+  ```java
+  ObjectInputStream ois = new ObjectInputStream(input) {
+      @Override
+      protected Class<?> resolveClass(ObjectStreamClass desc)
+          throws IOException, ClassNotFoundException {
+          if (!allowedClasses.contains(desc.getName())) {
+              throw new InvalidClassException("Unauthorized deserialization", desc.getName());
+          }
+          return super.resolveClass(desc);
+      }
+  };
+  ```
+
+  3. Use look-ahead deserialization validation:
+  ```java
+  ObjectInputFilter filter = ObjectInputFilter.Config.createFilter(
+      "com.myapp.model.*;!*"
+  );
+  ois.setObjectInputFilter(filter);
+  ```
+
+  4. Sign/encrypt serialized data:
+  - Use HMAC to verify integrity
+  - Encrypt with AES before transmission
+education: |
+  **Why AI makes this mistake:**
+  AI assistants use Java serialization because:
+  - It's built into the language and seems convenient
+  - Legacy code examples show this pattern
+  - They don't understand the security implications of deserializing arbitrary objects
+
+  **Impact:**
+  Insecure deserialization can lead to:
+  - Remote Code Execution (RCE) - attacker can run arbitrary code
+  - Privilege escalation
+  - Denial of service attacks
+  - Data tampering and authentication bypass
+
+  Famous exploits: Apache Commons Collections gadget chains allow RCE through
+  crafted serialized objects.
+
+  **Best practice:**
+  Never deserialize untrusted data. Prefer JSON, Protocol Buffers, or other
+  data-only formats. If you must use Java serialization, use strict whitelisting
+  and sign the data.

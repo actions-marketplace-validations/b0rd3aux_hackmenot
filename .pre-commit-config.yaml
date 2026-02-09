@@ -22,6 +22,7 @@ repos:
         args: ['--maxkb=500']
       - id: check-merge-conflict
       - id: detect-private-key
+        exclude: ^tests/fixtures/
 
   # Type checking with mypy (warning only - has pre-existing issues)
   # Run manually: mypy src/ --ignore-missing-imports

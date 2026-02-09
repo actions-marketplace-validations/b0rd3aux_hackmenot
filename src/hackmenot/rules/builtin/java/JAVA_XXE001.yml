@@ -1,0 +1,47 @@
+id: JAVA_XXE001
+name: XXE Vulnerability
+severity: high
+category: xml
+languages:
+  - java
+pattern:
+  type: object_creation
+  class:
+    - "DocumentBuilderFactory"
+    - "SAXParserFactory"
+    - "XMLInputFactory"
+message: |
+  XML External Entity (XXE) vulnerability detected. XML parsers by default allow
+  external entity resolution, which can be exploited to read files, perform SSRF,
+  or cause denial of service.
+
+  This is a common vulnerability (OWASP Top 10) in applications that parse XML.
+fix: |
+  Disable external entities and DTDs in your XML parser configuration:
+
+  For DocumentBuilderFactory:
+  factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+  factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+  factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+  factory.setXIncludeAware(false);
+  factory.setExpandEntityReferences(false);
+
+  For SAXParserFactory:
+  factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+
+  For XMLInputFactory (StAX):
+  factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+  factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+education: |
+  **Why AI makes this mistake:**
+  AI assistants create XXE vulnerabilities because they use default XML parser
+  configurations, and XXE protections require explicit configuration.
+
+  **Impact:**
+  XXE attacks can allow attackers to read arbitrary files from the server,
+  perform Server-Side Request Forgery (SSRF), cause denial of service, or
+  execute remote code in some configurations.
+
+  **Best practice:**
+  Always disable external entities and DTDs when parsing XML from untrusted sources.
+  Apply these settings to every XML parser factory.

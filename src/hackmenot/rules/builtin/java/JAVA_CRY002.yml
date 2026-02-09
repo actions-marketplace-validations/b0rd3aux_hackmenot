@@ -1,0 +1,38 @@
+id: JAVA_CRY002
+name: Insecure Random
+severity: medium
+category: crypto
+languages:
+  - java
+pattern:
+  type: object_creation
+  class: "Random"
+message: |
+  Insecure random number generator detected. java.util.Random is not cryptographically
+  secure and should not be used for security-sensitive operations.
+
+  java.util.Random uses a predictable algorithm and should only be used for
+  non-security purposes (games, simulations, etc.).
+fix: |
+  Use SecureRandom for security-sensitive operations:
+
+  SecureRandom secureRandom = new SecureRandom();
+  long sessionId = secureRandom.nextLong();
+
+  For generating tokens:
+  SecureRandom random = new SecureRandom();
+  byte[] token = new byte[32];
+  random.nextBytes(token);
+  String tokenString = Base64.getEncoder().encodeToString(token);
+education: |
+  **Why AI makes this mistake:**
+  AI assistants use java.util.Random because it has a simpler name and API,
+  and training examples often show it for quick demonstrations.
+
+  **Impact:**
+  Using insecure random numbers for security can lead to predictable session tokens,
+  weak cryptographic keys, predictable password reset tokens, and guessable CSRF tokens.
+
+  **Best practice:**
+  Always use SecureRandom for session IDs, authentication tokens, cryptographic keys,
+  password salts, CSRF tokens, and any security-sensitive random values.

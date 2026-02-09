@@ -1,0 +1,45 @@
+id: JAVA_INJ001
+name: SQL String Concatenation
+severity: critical
+category: injection
+languages:
+  - java
+pattern:
+  type: string_concat
+  contains:
+    - "SELECT"
+    - "INSERT"
+    - "UPDATE"
+    - "DELETE"
+message: |
+  Potential SQL injection detected. Building SQL queries with string concatenation
+  allows attackers to inject malicious SQL code.
+
+  SQL injection is consistently in the OWASP Top 10 and can compromise entire databases.
+fix: |
+  Use parameterized queries with PreparedStatement:
+
+  String query = "SELECT * FROM users WHERE id = ?";
+  PreparedStatement pstmt = conn.prepareStatement(query);
+  pstmt.setInt(1, userId);
+  ResultSet rs = pstmt.executeQuery();
+
+  For dynamic column/table names use whitelisting:
+  Set<String> validColumns = Set.of("name", "email", "created_at");
+  if (!validColumns.contains(columnName)) {
+      throw new IllegalArgumentException("Invalid column name");
+  }
+
+  Or use an ORM like Hibernate or JPA.
+education: |
+  **Why AI makes this mistake:**
+  AI assistants create SQL injection vulnerabilities because string concatenation
+  is direct, and they don't always recognize which variables contain user input.
+
+  **Impact:**
+  SQL injection allows attackers to access unauthorized data, modify or delete data,
+  bypass authentication, execute administrative operations, or execute OS commands.
+
+  **Best practice:**
+  Always use PreparedStatement with parameterized queries. Never concatenate user
+  input into SQL. Use ORMs when possible. Whitelist values that cannot be parameterized.

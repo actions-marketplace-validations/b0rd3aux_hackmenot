@@ -1,0 +1,73 @@
+id: RUST_SER001
+name: Unsafe Deserialization
+severity: high
+category: serialization
+languages:
+  - rust
+pattern:
+  type: call
+  names:
+    - "serde_json::from_str"
+    - "serde_json::from_slice"
+    - "bincode::deserialize"
+    - "bincode::deserialize_from"
+message: |
+  Deserialization of untrusted data detected. Deserializing data from untrusted
+  sources without validation can lead to security vulnerabilities.
+
+  While Rust's type system provides some protection, deserialization can still
+  cause issues like resource exhaustion or logic bugs.
+fix: |
+  1. Validate deserialized data:
+  ```rust
+  #[derive(Deserialize)]
+  struct User {
+      #[serde(deserialize_with = "validate_username")]
+      username: String,
+  }
+
+  fn validate_username<'de, D>(d: D) -> Result<String, D::Error>
+  where D: Deserializer<'de> {
+      let s = String::deserialize(d)?;
+      if s.len() > 100 {
+          return Err(serde::de::Error::custom("username too long"));
+      }
+      Ok(s)
+  }
+  ```
+
+  2. Set size limits:
+  ```rust
+  // Limit JSON depth and size
+  use serde_json::Deserializer;
+  let mut de = Deserializer::from_str(input);
+  de.disable_recursion_limit(); // or set a reasonable limit
+  ```
+
+  3. Use deny_unknown_fields:
+  ```rust
+  #[derive(Deserialize)]
+  #[serde(deny_unknown_fields)]
+  struct Config {
+      // ...
+  }
+  ```
+education: |
+  **Why AI makes this mistake:**
+  AI assistants use deserialization liberally because:
+  - It's convenient for parsing JSON/binary data
+  - They assume Rust's type safety makes it always safe
+  - They don't consider resource exhaustion attacks
+
+  **Impact:**
+  Unsafe deserialization can cause:
+  - Denial of service (deeply nested structures, huge allocations)
+  - Logic bugs (unexpected fields, out-of-range values)
+  - Application crashes (malformed data)
+
+  **Best practice:**
+  When deserializing untrusted data:
+  - Set size and depth limits
+  - Validate all fields with custom deserializers
+  - Use deny_unknown_fields to reject unexpected data
+  - Consider a separate validation step after deserialization

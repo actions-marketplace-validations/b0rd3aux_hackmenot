@@ -1,0 +1,53 @@
+id: JAVA_SEC001
+name: Hardcoded Credentials
+severity: high
+category: secrets
+languages:
+  - java
+pattern:
+  type: assignment
+  name_contains:
+    - "password"
+    - "passwd"
+    - "apiKey"
+    - "api_key"
+    - "secret"
+    - "token"
+    - "privateKey"
+    - "private_key"
+    - "accessKey"
+    - "access_key"
+message: |
+  Potential hardcoded credential detected. Secrets should never be embedded in
+  source code.
+
+  Hardcoded credentials can be easily extracted from compiled bytecode, version
+  control history, or decompiled classes.
+fix: |
+  Use environment variables, configuration files, or secret management:
+
+  1. Environment variables:
+  String apiKey = System.getenv("API_KEY");
+
+  2. Properties file (not in version control):
+  Properties props = new Properties();
+  props.load(new FileInputStream("config.properties"));
+
+  3. Spring Boot configuration with environment variables.
+
+  4. Secret management services (AWS Secrets Manager, HashiCorp Vault).
+
+  5. Add secrets files to .gitignore.
+education: |
+  **Why AI makes this mistake:**
+  AI assistants hardcode secrets because it's the simplest way to make example
+  code work, and training data contains example code with placeholder secrets.
+
+  **Impact:**
+  Hardcoded secrets lead to credential theft from source repositories, unauthorized
+  access to systems and APIs, data breaches, and expensive credential rotation.
+
+  **Best practice:**
+  Never commit secrets to version control. Use environment variables, configuration
+  files (excluded from git), or dedicated secret management services. Rotate secrets
+  regularly and immediately if exposed.
