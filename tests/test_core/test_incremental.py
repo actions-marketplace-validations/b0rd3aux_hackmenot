@@ -102,7 +102,7 @@ def test_cache_serializes_findings(tmp_path: Path):
     cache = FileCache(cache_dir)
 
     test_file = tmp_path / "test.py"
-    test_file.write_text('x = 1\n')
+    test_file.write_text("x = 1\n")
 
     findings = [
         Finding(

@@ -14,10 +14,11 @@ from hackmenot.cli.interactive import (
     apply_fixes_auto,
     write_fixed_files,
 )
-from hackmenot.fixes.diff import DiffGenerator
 from hackmenot.core.config import ConfigLoader
+from hackmenot.core.constants import SUPPORTED_EXTENSIONS
 from hackmenot.core.models import ScanResult, Severity
 from hackmenot.core.scanner import Scanner
+from hackmenot.fixes.diff import DiffGenerator
 from hackmenot.reporters.terminal import TerminalReporter
 
 app = typer.Typer(
@@ -30,6 +31,7 @@ console = Console()
 
 class OutputFormat(str, Enum):
     """Output format options."""
+
     terminal = "terminal"
     json = "json"
     sarif = "sarif"
@@ -143,30 +145,22 @@ def scan(
 
     # Validate --fix and --fix-interactive are mutually exclusive
     if fix and fix_interactive:
-        scan_console.print(
-            "Error: --fix and --fix-interactive cannot be used together"
-        )
+        scan_console.print("Error: --fix and --fix-interactive cannot be used together")
         raise typer.Exit(1)
 
     # Validate --staged and --changed-since are mutually exclusive
     if staged and changed_since:
-        scan_console.print(
-            "Error: --staged and --changed-since cannot be used together"
-        )
+        scan_console.print("Error: --staged and --changed-since cannot be used together")
         raise typer.Exit(1)
 
     # Validate --dry-run requires --fix
     if dry_run and not fix:
-        scan_console.print(
-            "Error: --dry-run requires --fix"
-        )
+        scan_console.print("Error: --dry-run requires --fix")
         raise typer.Exit(1)
 
     # Validate --diff requires --dry-run
     if diff and not dry_run:
-        scan_console.print(
-            "Error: --diff requires --dry-run"
-        )
+        scan_console.print("Error: --diff requires --dry-run")
         raise typer.Exit(1)
 
     # Handle --staged flag
@@ -181,11 +175,8 @@ def scan(
             raise typer.Exit(0)
 
         # Filter to supported extensions
-        supported_extensions = Scanner.SUPPORTED_EXTENSIONS
-        scan_paths = [
-            f for f in staged_files
-            if f.suffix in supported_extensions and f.exists()
-        ]
+        supported_extensions = SUPPORTED_EXTENSIONS
+        scan_paths = [f for f in staged_files if f.suffix in supported_extensions and f.exists()]
 
         if not scan_paths:
             scan_console.print("No supported files in staged changes")
@@ -202,11 +193,8 @@ def scan(
             raise typer.Exit(0)
 
         # Filter to supported extensions and existing files
-        supported_extensions = Scanner.SUPPORTED_EXTENSIONS
-        scan_paths = [
-            f for f in changed_files
-            if f.suffix in supported_extensions and f.exists()
-        ]
+        supported_extensions = SUPPORTED_EXTENSIONS
+        scan_paths = [f for f in changed_files if f.suffix in supported_extensions and f.exists()]
 
         if not scan_paths:
             scan_console.print("No supported files in changes")
@@ -254,6 +242,7 @@ def scan(
         # Include dependency scanning if requested
         if include_deps:
             from hackmenot.deps.scanner import DependencyScanner
+
             dep_scanner = DependencyScanner()
             project_dir = scan_paths[0].parent if scan_paths[0].is_file() else scan_paths[0]
             dep_result = dep_scanner.scan(project_dir)
@@ -267,6 +256,7 @@ def scan(
         # Output results (before applying fixes)
         if pr_comment:
             from hackmenot.reporters.markdown import MarkdownReporter
+
             md_reporter = MarkdownReporter()
             print(md_reporter.render(result))
         elif format == OutputFormat.terminal:
@@ -276,6 +266,7 @@ def scan(
             _output_json(result)
         elif format == OutputFormat.sarif:
             from hackmenot.reporters.sarif import SARIFReporter
+
             reporter = SARIFReporter()
             print(reporter.render(result))
     except typer.Exit:
@@ -293,13 +284,9 @@ def scan(
         for finding in result.findings:
             if finding.file_path not in original_contents:
                 try:
-                    original_contents[finding.file_path] = Path(
-                        finding.file_path
-                    ).read_text()
+                    original_contents[finding.file_path] = Path(finding.file_path).read_text()
                 except OSError as e:
-                    scan_console.print(
-                        f"Error reading {finding.file_path}: {e}"
-                    )
+                    scan_console.print(f"Error reading {finding.file_path}: {e}")
 
         if fix_interactive:
             # Interactive mode
@@ -322,9 +309,7 @@ def scan(
                 # Summary only
                 diff_gen.print_summary(diffs)
             if diffs:
-                scan_console.print(
-                    "\n[dim]Run without --dry-run to apply these fixes.[/dim]"
-                )
+                scan_console.print("\n[dim]Run without --dry-run to apply these fixes.[/dim]")
         else:
             # Write modified files back to disk
             files_written = write_fixed_files(modified_contents, original_contents)
@@ -356,10 +341,7 @@ def _output_json(result: ScanResult) -> None:
             }
             for f in result.findings
         ],
-        "summary": {
-            str(sev): count
-            for sev, count in result.summary_by_severity().items()
-        },
+        "summary": {str(sev): count for sev, count in result.summary_by_severity().items()},
     }
     print(json.dumps(data, indent=2))
 
@@ -407,7 +389,9 @@ def rules(
 def deps(
     path: Path = typer.Argument(..., help="Directory to scan for dependency files"),
     check_vulns: bool = typer.Option(False, "--check-vulns", help="Check for CVEs via OSV API"),
-    format: OutputFormat = typer.Option(OutputFormat.terminal, "--format", "-f", help="Output format"),
+    format: OutputFormat = typer.Option(
+        OutputFormat.terminal, "--format", "-f", help="Output format"
+    ),
     fail_on: str = typer.Option("high", "--fail-on", help="Minimum severity for non-zero exit"),
     ci: bool = typer.Option(False, "--ci", help="CI-friendly output"),
 ) -> None:
@@ -434,6 +418,7 @@ def deps(
             _output_json(result)
         elif format == OutputFormat.sarif:
             from hackmenot.reporters.sarif import SARIFReporter
+
             reporter = SARIFReporter()
             print(reporter.render(result))
     except typer.Exit:

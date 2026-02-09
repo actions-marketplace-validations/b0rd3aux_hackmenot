@@ -2,10 +2,9 @@
 
 from io import StringIO
 
-from rich.console import Console
-
 from hackmenot.core.models import Finding, ScanResult, Severity
 from hackmenot.reporters.terminal import TerminalReporter
+from rich.console import Console
 
 
 def test_reporter_renders_header():

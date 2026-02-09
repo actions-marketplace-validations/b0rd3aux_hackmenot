@@ -1,7 +1,5 @@
 """Tests for hallucination detection."""
 
-import pytest
-
 from hackmenot.core.models import Severity
 from hackmenot.deps.hallucination import HallucinationDetector
 from hackmenot.deps.parser import Dependency

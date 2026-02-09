@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from hackmenot.parsers.javascript import JavaScriptParser
 
 
@@ -24,7 +22,7 @@ class TestJavaScriptParserBasics:
         """Test parser supports JS/TS/JSX/TSX extensions."""
         parser = JavaScriptParser()
         expected = {".js", ".ts", ".mjs", ".cjs", ".jsx", ".tsx"}
-        assert parser.SUPPORTED_EXTENSIONS == expected
+        assert expected == parser.SUPPORTED_EXTENSIONS
 
 
 class TestFunctionCallExtraction:
@@ -163,7 +161,8 @@ class TestJSXHandling:
 
         # Find element with dangerouslySetInnerHTML
         dangerous_elements = [
-            e for e in jsx_elements
+            e
+            for e in jsx_elements
             if any("dangerouslySetInnerHTML" in attr for attr in e.attributes)
         ]
         assert len(dangerous_elements) >= 1

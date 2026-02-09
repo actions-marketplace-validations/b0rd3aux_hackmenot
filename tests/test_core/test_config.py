@@ -2,9 +2,7 @@
 
 from pathlib import Path
 
-import pytest
 import yaml
-
 from hackmenot.core.config import Config, ConfigLoader
 
 

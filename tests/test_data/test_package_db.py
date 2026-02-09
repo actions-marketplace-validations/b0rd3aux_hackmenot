@@ -1,7 +1,5 @@
 """Tests for package database loading."""
 
-import pytest
-
 from hackmenot.data import load_package_set
 
 

@@ -20,14 +20,14 @@ from hackmenot.parsers.terraform import (
 __all__ = [
     "AssignmentInfo",
     "CallInfo",
-    "JavaScriptParser",
     "JSParseResult",
     "JSXElementInfo",
+    "JavaScriptParser",
     "PythonParser",
     "TemplateLiteralInfo",
     "TerraformLocalInfo",
-    "TerraformParser",
     "TerraformParseResult",
+    "TerraformParser",
     "TerraformResourceInfo",
     "TerraformVariableInfo",
 ]

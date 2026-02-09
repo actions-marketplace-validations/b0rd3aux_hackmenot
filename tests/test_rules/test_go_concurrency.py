@@ -1,9 +1,6 @@
 """Tests for Go concurrency rules."""
 
-from pathlib import Path
-
 import pytest
-
 from hackmenot.core.scanner import Scanner
 
 
@@ -19,7 +16,7 @@ class TestGoConcurrencyRules:
         go_file = tmp_path / "main.go"
         # Use a comment containing the pattern since the parser extracts strings
         # In real code, goroutine spawning functions often have comments/docs
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 var counter int
@@ -29,7 +26,7 @@ func spawner() string {
     pattern := "go func()"
     return pattern
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_CON001"]
         assert len(findings) >= 1
@@ -37,7 +34,7 @@ func spawner() string {
     def test_goroutine_leak_detected(self, scanner, tmp_path):
         """Test GO_CON002 detects potential goroutine leak patterns."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 func leakyWorker() {
@@ -49,7 +46,7 @@ func leakyWorker() {
         }
     }
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_CON002"]
         assert len(findings) >= 1
@@ -57,14 +54,14 @@ func leakyWorker() {
     def test_channel_deadlock_detected(self, scanner, tmp_path):
         """Test GO_CON003 detects potential channel deadlock."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 func deadlock() {
     ch := make(chan int)
     ch <- 1  // blocks forever, no receiver
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_CON003"]
         assert len(findings) >= 1
@@ -74,7 +71,7 @@ func deadlock() {
         go_file = tmp_path / "main.go"
         # This code uses proper synchronization but we still detect patterns
         # as they are potential issues - the rules are advisory
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 import "sync"
@@ -95,7 +92,7 @@ func (c *SafeCounter) Value() int {
     defer c.mu.Unlock()
     return c.v
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         # This clean code should not trigger concurrency rules
         # as it doesn't use goroutines or channels

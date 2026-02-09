@@ -4,8 +4,6 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from hackmenot.core.models import Severity
 from hackmenot.deps.scanner import DependencyScanner
 
@@ -39,7 +37,7 @@ class TestDependencyScanner:
         # Mock the hallucination detector to say the package exists
         # so the typosquat check runs
         scanner = DependencyScanner()
-        with patch.object(scanner.hallucination_detector, 'check', return_value=None):
+        with patch.object(scanner.hallucination_detector, "check", return_value=None):
             result = scanner.scan(tmp_path)
 
         assert result.files_scanned == 1
@@ -57,8 +55,8 @@ class TestDependencyScanner:
 
         scanner = DependencyScanner()
         # Mock both detectors to return no findings
-        with patch.object(scanner.hallucination_detector, 'check', return_value=None):
-            with patch.object(scanner.typosquat_detector, 'check', return_value=None):
+        with patch.object(scanner.hallucination_detector, "check", return_value=None):
+            with patch.object(scanner.typosquat_detector, "check", return_value=None):
                 result = scanner.scan(tmp_path)
 
         assert result.files_scanned == 1
@@ -83,11 +81,7 @@ class TestDependencyScanner:
 
         # Create package.json
         pkg_file = tmp_path / "package.json"
-        pkg_file.write_text(json.dumps({
-            "dependencies": {
-                "fake-npm-pkg": "^1.0.0"
-            }
-        }))
+        pkg_file.write_text(json.dumps({"dependencies": {"fake-npm-pkg": "^1.0.0"}}))
 
         scanner = DependencyScanner()
         result = scanner.scan(tmp_path)
@@ -119,9 +113,9 @@ class TestDependencyScanner:
         req_file.write_text("requests==2.28.0\n")
 
         scanner = DependencyScanner()
-        with patch.object(scanner.hallucination_detector, 'check', return_value=None):
-            with patch.object(scanner.typosquat_detector, 'check', return_value=None):
-                with patch.object(scanner.osv_client, 'check_batch') as mock_osv:
+        with patch.object(scanner.hallucination_detector, "check", return_value=None):
+            with patch.object(scanner.typosquat_detector, "check", return_value=None):
+                with patch.object(scanner.osv_client, "check_batch") as mock_osv:
                     result = scanner.scan(tmp_path, check_vulns=False)
 
         # OSV client should not be called when check_vulns is False
@@ -134,9 +128,9 @@ class TestDependencyScanner:
         req_file.write_text("requests==2.28.0\n")
 
         scanner = DependencyScanner()
-        with patch.object(scanner.hallucination_detector, 'check', return_value=None):
-            with patch.object(scanner.typosquat_detector, 'check', return_value=None):
-                with patch.object(scanner.osv_client, 'check_batch', return_value=[]) as mock_osv:
+        with patch.object(scanner.hallucination_detector, "check", return_value=None):
+            with patch.object(scanner.typosquat_detector, "check", return_value=None):
+                with patch.object(scanner.osv_client, "check_batch", return_value=[]) as mock_osv:
                     result = scanner.scan(tmp_path, check_vulns=True)
 
         # OSV client should be called when check_vulns is True
@@ -149,14 +143,14 @@ class TestDependencyScanner:
         req_file.write_text("requests==2.28.0\n")
 
         scanner = DependencyScanner()
-        with patch.object(scanner.hallucination_detector, 'check', return_value=None):
-            with patch.object(scanner.typosquat_detector, 'check', return_value=None):
+        with patch.object(scanner.hallucination_detector, "check", return_value=None):
+            with patch.object(scanner.typosquat_detector, "check", return_value=None):
                 result = scanner.scan(tmp_path)
 
         # Check ScanResult properties
-        assert hasattr(result, 'files_scanned')
-        assert hasattr(result, 'findings')
-        assert hasattr(result, 'scan_time_ms')
+        assert hasattr(result, "files_scanned")
+        assert hasattr(result, "findings")
+        assert hasattr(result, "scan_time_ms")
         assert isinstance(result.files_scanned, int)
         assert isinstance(result.findings, list)
         assert isinstance(result.scan_time_ms, float)

@@ -42,6 +42,7 @@ dev = [
     "pytest-cov>=4.0.0",
     "ruff>=0.1.0",
     "mypy>=1.8.0",
+    "pre-commit>=3.6.0",
 ]
 
 [project.scripts]
@@ -71,7 +72,42 @@ line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP"]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "W",      # pycodestyle warnings
+    "UP",     # pyupgrade
+    "BLE",    # flake8-blind-except (no bare except)
+    "PTH",    # flake8-use-pathlib (prefer pathlib over os.path)
+    "PLC",    # pylint convention
+    "PLE",    # pylint errors
+    "PLW",    # pylint warnings
+    "RUF",    # ruff-specific rules
+    "SIM",    # flake8-simplify
+    "TRY",    # tryceratops (exception handling)
+]
+ignore = [
+    "E501",    # Line too long - too many pre-existing violations
+    "TRY003",  # Allow long exception messages
+    "TRY300",  # Allow return in try block (else block is pedantic)
+    "TRY301",  # Allow raise in try block
+    "PTH123",  # Allow open() - pathlib alternative is verbose
+    "PLW2901", # Allow loop variable overwrite (common pattern)
+    "SIM108",  # Allow if-else instead of ternary (readability)
+    "SIM102",  # Allow nested if (sometimes clearer than combined)
+    "PLC0415", # Allow imports not at top level (lazy imports are intentional)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["PLR2004", "SIM117", "F841", "E741"]  # Allow magic numbers, nested with, unused vars in tests
+"tests/fixtures/**/*.py" = ["F821", "E501"]  # Test fixtures have intentionally bad code
+"src/hackmenot/core/__init__.py" = ["PLC0415"]  # Lazy imports are intentional
+"src/hackmenot/parsers/python.py" = ["N802"]  # AST visitor methods must match node names
+"src/hackmenot/parsers/*.py" = ["BLE001", "RUF012"]  # Parsers catch broad exceptions intentionally
+"src/hackmenot/reporters/*.py" = ["RUF012"]  # Reporter class mappings are fine
+"src/hackmenot/fixes/engine.py" = ["BLE001"]  # Fall-through exception handling
 
 [tool.mypy]
 python_version = "3.10"

@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Any
 
 import tree_sitter_go as ts_go
-from tree_sitter import Language, Parser, Node
+from tree_sitter import Language, Node, Parser
 
-from hackmenot.parsers.base import BaseParser, ParseResult
+from hackmenot.parsers.base import BaseParser
 
 
 @dataclass
@@ -330,7 +330,7 @@ class _GoExtractor:
             text = self._get_node_text(path_node)
             if text:
                 # Remove quotes
-                import_path = text.strip('"').strip('`')
+                import_path = text.strip('"').strip("`")
                 self.imports.append(import_path)
 
     def _get_node_text(self, node: Node) -> str | None:
@@ -338,6 +338,6 @@ class _GoExtractor:
         if node is None:
             return None
         try:
-            return self.source[node.start_byte:node.end_byte]
+            return self.source[node.start_byte : node.end_byte]
         except Exception:
             return None

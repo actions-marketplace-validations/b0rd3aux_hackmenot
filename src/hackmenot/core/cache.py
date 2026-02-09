@@ -59,9 +59,7 @@ class FileCache:
 
     CACHE_VERSION = "v1.0.0"
 
-    def __init__(
-        self, cache_dir: Path | None = None, rules_hash: str | None = None
-    ) -> None:
+    def __init__(self, cache_dir: Path | None = None, rules_hash: str | None = None) -> None:
         self.cache_dir = cache_dir or self._default_cache_dir()
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.rules_hash = rules_hash or ""

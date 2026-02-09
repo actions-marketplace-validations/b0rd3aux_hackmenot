@@ -1,7 +1,6 @@
 """Tests for typosquat detection."""
 
 import pytest
-
 from hackmenot.core.models import Severity
 from hackmenot.deps.parser import Dependency
 from hackmenot.deps.typosquat import TyposquatDetector, levenshtein_distance

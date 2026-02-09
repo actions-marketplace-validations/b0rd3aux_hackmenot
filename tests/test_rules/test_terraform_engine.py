@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-
 from hackmenot.core.models import Rule, Severity
 from hackmenot.parsers.terraform import TerraformParser
 from hackmenot.rules.engine import RulesEngine
@@ -24,7 +23,9 @@ def parser() -> TerraformParser:
 class TestTerraformResourceFieldPattern:
     """Tests for Terraform resource field pattern matching."""
 
-    def test_detects_public_acl_in_s3_bucket(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_detects_public_acl_in_s3_bucket(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test detection of public ACL in S3 bucket."""
         rule = Rule(
             id="TF001",
@@ -58,7 +59,9 @@ resource "aws_s3_bucket" "public_bucket" {
         assert findings[0].rule_id == "TF001"
         assert "aws_s3_bucket.public_bucket" in findings[0].code_snippet
 
-    def test_no_match_for_private_acl(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_no_match_for_private_acl(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test no finding for private ACL."""
         rule = Rule(
             id="TF001",
@@ -94,7 +97,9 @@ resource "aws_s3_bucket" "private_bucket" {
 class TestTerraformResourceMissingBlockPattern:
     """Tests for Terraform resource missing block pattern matching."""
 
-    def test_detects_missing_encryption_block(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_detects_missing_encryption_block(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test detection of missing encryption configuration."""
         rule = Rule(
             id="TF002",
@@ -126,7 +131,9 @@ resource "aws_s3_bucket" "unencrypted" {
         assert len(findings) == 1
         assert findings[0].rule_id == "TF002"
 
-    def test_no_match_when_encryption_block_present(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_no_match_when_encryption_block_present(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test no finding when encryption block is present."""
         rule = Rule(
             id="TF002",
@@ -168,7 +175,9 @@ resource "aws_s3_bucket" "encrypted" {
 class TestTerraformResourceMissingFieldPattern:
     """Tests for Terraform resource missing field pattern matching."""
 
-    def test_detects_missing_versioning(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_detects_missing_versioning(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test detection of missing versioning enabled."""
         rule = Rule(
             id="TF003",
@@ -200,7 +209,9 @@ resource "aws_s3_bucket" "no_versioning" {
         assert len(findings) == 1
         assert findings[0].rule_id == "TF003"
 
-    def test_no_match_when_versioning_enabled(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_no_match_when_versioning_enabled(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test no finding when versioning is enabled."""
         rule = Rule(
             id="TF003",
@@ -236,7 +247,9 @@ resource "aws_s3_bucket" "versioned" {
 class TestTerraformVariablePattern:
     """Tests for Terraform variable pattern matching."""
 
-    def test_detects_password_variable_with_default(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_detects_password_variable_with_default(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test detection of password variable with default value."""
         rule = Rule(
             id="TF004",
@@ -270,7 +283,9 @@ variable "db_password" {
         assert findings[0].rule_id == "TF004"
         assert 'variable "db_password"' in findings[0].code_snippet
 
-    def test_no_match_for_password_without_default(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_no_match_for_password_without_default(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test no finding for password variable without default."""
         rule = Rule(
             id="TF004",
@@ -306,7 +321,9 @@ variable "db_password" {
 class TestTerraformLocalPattern:
     """Tests for Terraform local pattern matching."""
 
-    def test_detects_secret_in_local(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_detects_secret_in_local(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test detection of secret values in locals."""
         rule = Rule(
             id="TF005",
@@ -337,7 +354,9 @@ locals {
 
         assert len(findings) == 2
 
-    def test_no_match_for_clean_locals(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_no_match_for_clean_locals(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test no finding for locals without secrets."""
         rule = Rule(
             id="TF005",
@@ -403,7 +422,9 @@ class TestTerraformLanguageFilter:
 
         assert len(findings) == 0
 
-    def test_python_rule_does_not_match_terraform_file(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_python_rule_does_not_match_terraform_file(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test Python rules don't match Terraform files."""
         rule = Rule(
             id="PY001",
@@ -436,7 +457,9 @@ variable "password" {
 class TestTerraformTfvarsFile:
     """Tests for .tfvars file handling."""
 
-    def test_detects_secret_in_tfvars(self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path):
+    def test_detects_secret_in_tfvars(
+        self, engine: RulesEngine, parser: TerraformParser, tmp_path: Path
+    ):
         """Test detection of secrets in .tfvars files."""
         rule = Rule(
             id="TF006",

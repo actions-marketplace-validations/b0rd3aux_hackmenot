@@ -3,8 +3,7 @@
 from pathlib import Path
 
 import pytest
-
-from hackmenot.core.models import FixConfig, Severity
+from hackmenot.core.models import Severity
 from hackmenot.rules.registry import RuleRegistry
 
 
@@ -74,7 +73,9 @@ education: "SQL injection education"
     assert rule is not None
     assert rule.fix.template == "Use parameterized queries instead"
     assert rule.fix.pattern == 'f"SELECT * FROM {table} WHERE id = {user_id}"'
-    assert rule.fix.replacement == 'cursor.execute("SELECT * FROM ? WHERE id = ?", (table, user_id))'
+    assert (
+        rule.fix.replacement == 'cursor.execute("SELECT * FROM ? WHERE id = ?", (table, user_id))'
+    )
 
 
 def test_parse_rule_with_fix_dict_template_only(temp_rules_dir: Path):

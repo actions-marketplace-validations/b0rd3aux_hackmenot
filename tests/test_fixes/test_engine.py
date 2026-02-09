@@ -1,7 +1,7 @@
 """Tests for FixEngine."""
 
 from hackmenot.core.models import Finding, FixConfig, Rule, Severity
-from hackmenot.fixes.engine import FixEngine, FixResult
+from hackmenot.fixes.engine import FixEngine
 
 
 def test_fix_engine_applies_template():
@@ -215,7 +215,7 @@ def test_pattern_based_fix_applies():
         message="Hardcoded password found",
         pattern={"type": "regex", "value": r'password\s*=\s*"[^"]*"'},
         fix=FixConfig(
-            pattern='{var} = {string}',
+            pattern="{var} = {string}",
             replacement='{var} = os.environ.get("{var}")',
         ),
     )
@@ -254,7 +254,7 @@ def test_pattern_based_fix_falls_back_to_template():
         message="Hardcoded password found",
         pattern={"type": "regex", "value": r'password\s*=\s*"[^"]*"'},
         fix=FixConfig(
-            pattern='{var} = {string}',  # Won't match
+            pattern="{var} = {string}",  # Won't match
             replacement='{var} = os.environ.get("{var}")',
             template='password = os.environ.get("PASSWORD")',
         ),
@@ -334,7 +334,7 @@ api_key = "abc123"
             message="Hardcoded secret found",
             pattern={"type": "regex", "value": r'\w+\s*=\s*"[^"]*"'},
             fix=FixConfig(
-                pattern='{var} = {string}',
+                pattern="{var} = {string}",
                 replacement='{var} = os.environ.get("{var}")',
             ),
         ),

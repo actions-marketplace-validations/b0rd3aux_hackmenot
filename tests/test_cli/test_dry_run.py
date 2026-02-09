@@ -2,9 +2,8 @@
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
 from hackmenot.cli.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -23,10 +22,10 @@ class TestDryRunFlag:
         """Test that --dry-run shows fix summary without applying."""
         # Create vulnerable file (SQL injection triggers INJ001)
         vuln_file = tmp_path / "vuln.py"
-        original_content = '''def get_user(user_id):
+        original_content = """def get_user(user_id):
     query = f"SELECT * FROM users WHERE id = {user_id}"
     return db.execute(query)
-'''
+"""
         vuln_file.write_text(original_content)
 
         result = runner.invoke(app, ["scan", str(tmp_path), "--fix", "--dry-run"])
@@ -39,10 +38,10 @@ class TestDryRunFlag:
     def test_dry_run_does_not_modify_files(self, tmp_path: Path):
         """Test that --dry-run does not write any files."""
         # Create vulnerable file (SQL injection)
-        original_content = '''def get_user(user_id):
+        original_content = """def get_user(user_id):
     query = f"SELECT * FROM users WHERE id = {user_id}"
     return db.execute(query)
-'''
+"""
         vuln_file = tmp_path / "vuln.py"
         vuln_file.write_text(original_content)
 
@@ -72,14 +71,12 @@ class TestDiffFlag:
         """Test that --diff shows unified diff output."""
         # Create vulnerable file (SQL injection)
         vuln_file = tmp_path / "vuln.py"
-        vuln_file.write_text('''def get_user(user_id):
+        vuln_file.write_text("""def get_user(user_id):
     query = f"SELECT * FROM users WHERE id = {user_id}"
     return db.execute(query)
-''')
+""")
 
-        result = runner.invoke(
-            app, ["scan", str(tmp_path), "--fix", "--dry-run", "--diff"]
-        )
+        result = runner.invoke(app, ["scan", str(tmp_path), "--fix", "--dry-run", "--diff"])
 
         # Exit code 1 indicates findings were found
         assert result.exit_code == 1
@@ -106,17 +103,13 @@ class TestFixFlagsCombinations:
         """Test that --fix-interactive and --dry-run together."""
         # --dry-run requires --fix, and --fix is mutually exclusive with --fix-interactive
         (tmp_path / "test.py").write_text("x = 1")
-        result = runner.invoke(
-            app, ["scan", str(tmp_path), "--fix-interactive", "--dry-run"]
-        )
+        result = runner.invoke(app, ["scan", str(tmp_path), "--fix-interactive", "--dry-run"])
         assert result.exit_code == 1
         assert "--dry-run requires --fix" in result.stdout
 
     def test_all_fix_flags_together_fails(self, tmp_path: Path):
         """Test that --fix and --fix-interactive together fails."""
         (tmp_path / "test.py").write_text("x = 1")
-        result = runner.invoke(
-            app, ["scan", str(tmp_path), "--fix", "--fix-interactive"]
-        )
+        result = runner.invoke(app, ["scan", str(tmp_path), "--fix", "--fix-interactive"])
         assert result.exit_code == 1
         assert "cannot be used together" in result.stdout

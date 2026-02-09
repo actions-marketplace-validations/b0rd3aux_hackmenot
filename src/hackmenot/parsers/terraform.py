@@ -3,11 +3,11 @@
 from dataclasses import dataclass, field
 from io import StringIO
 from pathlib import Path
-from typing import Any, IO
+from typing import IO, Any
 
 import hcl2
 
-from hackmenot.parsers.base import BaseParser, ParseResult
+from hackmenot.parsers.base import BaseParser
 
 
 @dataclass
@@ -59,7 +59,7 @@ class TerraformParser(BaseParser):
     def parse_file(self, file_path: Path) -> TerraformParseResult:
         """Parse a Terraform file from disk."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 suffix = file_path.suffix
                 result = self._parse_hcl(f, suffix)
                 result.file_path = file_path
@@ -77,9 +77,7 @@ class TerraformParser(BaseParser):
                 error_message=str(e),
             )
 
-    def parse_string(
-        self, source: str, filename: str = "<string>"
-    ) -> TerraformParseResult:
+    def parse_string(self, source: str, filename: str = "<string>") -> TerraformParseResult:
         """Parse Terraform HCL source code string."""
         file_path = Path(filename)
         suffix = file_path.suffix if file_path.suffix else ".tf"

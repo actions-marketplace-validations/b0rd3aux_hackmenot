@@ -4,9 +4,8 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from typer.testing import CliRunner
-
 from hackmenot.cli.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -50,7 +49,7 @@ class TestCIIntegration:
 
     def test_ci_with_json_format(self, tmp_path: Path):
         """Test --ci with JSON output format."""
-        (tmp_path / "test.py").write_text('x = 1')
+        (tmp_path / "test.py").write_text("x = 1")
         result = runner.invoke(app, ["scan", str(tmp_path), "--ci", "--format", "json"])
 
         assert result.exit_code == 0
@@ -84,7 +83,7 @@ class TestPRCommentIntegration:
     def test_pr_comment_with_staged(self, tmp_path: Path):
         """Test --pr-comment combined with --staged."""
         vuln_file = tmp_path / "vuln.py"
-        vuln_file.write_text('eval(user_input)')
+        vuln_file.write_text("eval(user_input)")
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
             with patch("hackmenot.cli.main.get_staged_files", return_value=[vuln_file]):
@@ -153,24 +152,20 @@ class TestCIFlagCombinations:
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
             with patch("hackmenot.cli.main.get_staged_files", return_value=[vuln_file]):
-                result = runner.invoke(
-                    app, ["scan", "--staged", "--ci", "--format", "sarif"]
-                )
+                result = runner.invoke(app, ["scan", "--staged", "--ci", "--format", "sarif"])
                 sarif_data = json.loads(result.stdout)
                 assert "$schema" in sarif_data
 
     def test_ci_fail_on_combined(self, tmp_path: Path):
         """Test --ci with --fail-on combined."""
-        (tmp_path / "test.py").write_text('x = 1')
-        result = runner.invoke(
-            app, ["scan", str(tmp_path), "--ci", "--fail-on", "low"]
-        )
+        (tmp_path / "test.py").write_text("x = 1")
+        result = runner.invoke(app, ["scan", str(tmp_path), "--ci", "--fail-on", "low"])
         assert result.exit_code == 0
         assert "\x1b[" not in result.stdout
 
     def test_pr_comment_ci_combination(self, tmp_path: Path):
         """Test --pr-comment works independently of --ci."""
-        (tmp_path / "test.py").write_text('x = 1')
+        (tmp_path / "test.py").write_text("x = 1")
         # --pr-comment should work without --ci
         result = runner.invoke(app, ["scan", str(tmp_path), "--pr-comment"])
         assert "## 🔒 hackmenot Security Scan" in result.stdout
@@ -182,7 +177,7 @@ class TestJavaScriptCIIntegration:
     def test_staged_scans_js_files(self, tmp_path: Path):
         """Test --staged scans JavaScript files in CI mode."""
         js_file = tmp_path / "app.js"
-        js_file.write_text('eval(userInput);')
+        js_file.write_text("eval(userInput);")
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
             with patch("hackmenot.cli.main.get_staged_files", return_value=[js_file]):
@@ -194,7 +189,7 @@ class TestJavaScriptCIIntegration:
     def test_staged_scans_ts_files(self, tmp_path: Path):
         """Test --staged scans TypeScript files."""
         ts_file = tmp_path / "app.ts"
-        ts_file.write_text('const x: number = 1;')
+        ts_file.write_text("const x: number = 1;")
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
             with patch("hackmenot.cli.main.get_staged_files", return_value=[ts_file]):
@@ -203,7 +198,7 @@ class TestJavaScriptCIIntegration:
 
     def test_sarif_includes_js_findings(self, tmp_path: Path):
         """Test SARIF output includes JavaScript findings."""
-        (tmp_path / "app.js").write_text('eval(input);')
+        (tmp_path / "app.js").write_text("eval(input);")
         result = runner.invoke(app, ["scan", str(tmp_path), "--format", "sarif"])
 
         sarif_data = json.loads(result.stdout)
@@ -216,7 +211,7 @@ class TestJavaScriptCIIntegration:
 
     def test_pr_comment_js_findings(self, tmp_path: Path):
         """Test --pr-comment shows JavaScript findings."""
-        (tmp_path / "app.js").write_text('document.innerHTML = userInput;')
+        (tmp_path / "app.js").write_text("document.innerHTML = userInput;")
         result = runner.invoke(app, ["scan", str(tmp_path), "--pr-comment"])
 
         assert "## 🔒 hackmenot Security Scan" in result.stdout
@@ -231,20 +226,18 @@ class TestMixedLanguageCIIntegration:
         py_file.write_text('query = f"SELECT * FROM {x}"')
 
         js_file = tmp_path / "app.js"
-        js_file.write_text('eval(userInput);')
+        js_file.write_text("eval(userInput);")
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
-            with patch(
-                "hackmenot.cli.main.get_staged_files", return_value=[py_file, js_file]
-            ):
+            with patch("hackmenot.cli.main.get_staged_files", return_value=[py_file, js_file]):
                 result = runner.invoke(app, ["scan", "--staged", "--ci"])
                 # Should find issues in both files
                 assert result.exit_code == 1
 
     def test_sarif_mixed_languages(self, tmp_path: Path):
         """Test SARIF output with mixed language findings."""
-        (tmp_path / "app.py").write_text('eval(x)')
-        (tmp_path / "app.js").write_text('eval(y);')
+        (tmp_path / "app.py").write_text("eval(x)")
+        (tmp_path / "app.js").write_text("eval(y);")
 
         result = runner.invoke(app, ["scan", str(tmp_path), "--format", "sarif"])
         sarif_data = json.loads(result.stdout)
@@ -255,7 +248,7 @@ class TestMixedLanguageCIIntegration:
     def test_pr_comment_mixed_findings(self, tmp_path: Path):
         """Test --pr-comment shows findings from both languages."""
         (tmp_path / "app.py").write_text('query = f"SELECT * FROM {x}"')
-        (tmp_path / "app.js").write_text('const q = `SELECT * FROM ${x}`;')
+        (tmp_path / "app.js").write_text("const q = `SELECT * FROM ${x}`;")
 
         result = runner.invoke(app, ["scan", str(tmp_path), "--pr-comment"])
 

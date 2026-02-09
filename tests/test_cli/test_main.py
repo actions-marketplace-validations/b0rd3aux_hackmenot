@@ -1,8 +1,7 @@
 """Tests for CLI main entry point."""
 
-from typer.testing import CliRunner
-
 from hackmenot.cli.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

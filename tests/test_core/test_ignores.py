@@ -1,7 +1,5 @@
 """Tests for IgnoreHandler inline ignore comments."""
 
-import pytest
-
 from hackmenot.core.ignores import IgnoreHandler
 
 
@@ -18,7 +16,7 @@ class TestParseSingleLineIgnore:
 
     def test_parse_single_line_ignore_various_spacing(self):
         """Parse ignore comment with various spacing."""
-        source = 'x = 1  #hackmenot:ignore[AUTH001] - some reason here'
+        source = "x = 1  #hackmenot:ignore[AUTH001] - some reason here"
         handler = IgnoreHandler()
         ignores = handler.parse(source)
 
@@ -148,7 +146,7 @@ def code():
 
     def test_empty_reason_not_valid(self):
         """Empty reason (just dash) is not valid."""
-        source = 'x = 1  # hackmenot:ignore[SEC001] - '
+        source = "x = 1  # hackmenot:ignore[SEC001] - "
         handler = IgnoreHandler()
         ignores = handler.parse(source)
 

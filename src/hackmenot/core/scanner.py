@@ -1,13 +1,20 @@
 """Scanner orchestrator."""
 
 import fnmatch
-import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from hackmenot.core.cache import FileCache
 from hackmenot.core.config import Config
+from hackmenot.core.constants import (
+    DEFAULT_WORKERS,
+    GO_EXTENSIONS,
+    JS_EXTENSIONS,
+    SKIP_DIRS,
+    SUPPORTED_EXTENSIONS,
+    TERRAFORM_EXTENSIONS,
+)
 from hackmenot.core.ignores import IgnoreHandler
 from hackmenot.core.models import Finding, ScanResult, Severity
 from hackmenot.parsers.golang import GoParser
@@ -21,37 +28,7 @@ from hackmenot.rules.registry import RuleRegistry
 class Scanner:
     """Main scanner that orchestrates parsing and rule checking."""
 
-    SUPPORTED_EXTENSIONS = {".py", ".js", ".ts", ".mjs", ".cjs", ".jsx", ".tsx", ".go", ".tf", ".tfvars"}
-    JS_EXTENSIONS = {".js", ".ts", ".mjs", ".cjs", ".jsx", ".tsx"}
-    GO_EXTENSIONS = {".go"}
-    TERRAFORM_EXTENSIONS = {".tf", ".tfvars"}
-    DEFAULT_WORKERS = min(32, (os.cpu_count() or 1) + 4)
-    SKIP_DIRS = {
-        "node_modules",
-        "__pycache__",
-        ".git",
-        ".hg",
-        ".svn",
-        "venv",
-        ".venv",
-        "env",
-        ".env",
-        ".tox",
-        ".nox",
-        ".pytest_cache",
-        ".mypy_cache",
-        ".ruff_cache",
-        "dist",
-        "build",
-        ".eggs",
-        "vendor",
-        "third_party",
-        ".terraform",
-    }
-
-    def __init__(
-        self, cache: FileCache | None = None, config: Config | None = None
-    ) -> None:
+    def __init__(self, cache: FileCache | None = None, config: Config | None = None) -> None:
         self.parser = PythonParser()
         self.js_parser = JavaScriptParser()
         self.go_parser = GoParser()
@@ -97,19 +74,15 @@ class Scanner:
         errors: list[str] = []
 
         if parallel and len(files) > 1:
-            findings, errors = self._scan_parallel(
-                files, use_cache, min_severity, max_workers
-            )
+            findings, errors = self._scan_parallel(files, use_cache, min_severity, max_workers)
         else:
             for file_path in files:
                 try:
                     file_findings = self._get_findings_for_file(file_path, use_cache)
                     # Filter by severity
-                    file_findings = [
-                        f for f in file_findings if f.severity >= min_severity
-                    ]
+                    file_findings = [f for f in file_findings if f.severity >= min_severity]
                     findings.extend(file_findings)
-                except Exception as e:
+                except (OSError, UnicodeDecodeError, ValueError) as e:
                     errors.append(f"{file_path}: {e}")
 
         elapsed_ms = (time.time() - start_time) * 1000
@@ -141,7 +114,7 @@ class Scanner:
         """
         findings: list[Finding] = []
         errors: list[str] = []
-        workers = max_workers or self.DEFAULT_WORKERS
+        workers = max_workers or DEFAULT_WORKERS
 
         with ThreadPoolExecutor(max_workers=workers) as executor:
             # Submit all file scanning tasks
@@ -156,36 +129,46 @@ class Scanner:
                 try:
                     file_findings = future.result()
                     # Filter by severity
-                    file_findings = [
-                        f for f in file_findings if f.severity >= min_severity
-                    ]
+                    file_findings = [f for f in file_findings if f.severity >= min_severity]
                     findings.extend(file_findings)
-                except Exception as e:
+                except (OSError, UnicodeDecodeError, ValueError) as e:
                     errors.append(f"{file_path}: {e}")
 
         return findings, errors
 
     def _collect_files(self, paths: list[Path]) -> list[Path]:
-        """Collect all scannable files from paths, respecting path excludes."""
+        """Collect all scannable files from paths, respecting path excludes.
+
+        Uses pathlib.rglob for directory traversal with symlink escape protection.
+        """
         files: list[Path] = []
 
         for path in paths:
             if path.is_file():
-                if path.suffix in self.SUPPORTED_EXTENSIONS:
+                if path.suffix in SUPPORTED_EXTENSIONS:
                     files.append(path)
             elif path.is_dir():
-                for root, dirs, filenames in os.walk(path):
-                    # Prune SKIP_DIRS in-place to prevent descending
-                    dirs[:] = [
-                        d for d in dirs
-                        if d not in self.SKIP_DIRS and not d.endswith(".egg-info")
-                    ]
-
-                    root_path = Path(root)
-                    for filename in filenames:
-                        file_path = root_path / filename
-                        if file_path.suffix in self.SUPPORTED_EXTENSIONS:
-                            files.append(file_path)
+                base_path = path.resolve()
+                for file_path in path.rglob("*"):
+                    # Skip directories
+                    if not file_path.is_file():
+                        continue
+                    # Check extension
+                    if file_path.suffix not in SUPPORTED_EXTENSIONS:
+                        continue
+                    # Skip files in SKIP_DIRS or .egg-info directories
+                    if any(
+                        part in SKIP_DIRS or part.endswith(".egg-info") for part in file_path.parts
+                    ):
+                        continue
+                    # Symlink escape protection: ensure resolved path is within base
+                    try:
+                        resolved = file_path.resolve()
+                        if not resolved.is_relative_to(base_path):
+                            continue
+                    except (OSError, ValueError):
+                        continue
+                    files.append(file_path)
 
         # Filter out excluded paths
         if self.config.paths_exclude:
@@ -216,9 +199,7 @@ class Scanner:
                 continue
         return False
 
-    def _get_findings_for_file(
-        self, file_path: Path, use_cache: bool
-    ) -> list[Finding]:
+    def _get_findings_for_file(self, file_path: Path, use_cache: bool) -> list[Finding]:
         """Get findings for a file, using cache if available."""
         if use_cache and self.cache is not None:
             cached = self.cache.get(file_path)
@@ -241,11 +222,11 @@ class Scanner:
         Returns:
             "python", "javascript", "go", or "terraform" based on the file extension.
         """
-        if file_path.suffix in self.JS_EXTENSIONS:
+        if file_path.suffix in JS_EXTENSIONS:
             return "javascript"
-        if file_path.suffix in self.GO_EXTENSIONS:
+        if file_path.suffix in GO_EXTENSIONS:
             return "go"
-        if file_path.suffix in self.TERRAFORM_EXTENSIONS:
+        if file_path.suffix in TERRAFORM_EXTENSIONS:
             return "terraform"
         return "python"
 

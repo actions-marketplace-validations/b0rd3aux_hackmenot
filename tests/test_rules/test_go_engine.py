@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-
 from hackmenot.core.models import Rule, Severity
 from hackmenot.parsers.golang import GoParser
 from hackmenot.rules.engine import RulesEngine
@@ -92,7 +91,9 @@ func query() {
 
         assert len(findings) == 2
 
-    def test_case_insensitive_call_matching(self, engine: RulesEngine, parser: GoParser, tmp_path: Path):
+    def test_case_insensitive_call_matching(
+        self, engine: RulesEngine, parser: GoParser, tmp_path: Path
+    ):
         """Test case-insensitive matching for call names."""
         rule = Rule(
             id="GO003",
@@ -130,7 +131,9 @@ func main() {
 class TestGoStringPattern:
     """Tests for Go string pattern matching."""
 
-    def test_detects_hardcoded_password_in_assignment(self, engine: RulesEngine, parser: GoParser, tmp_path: Path):
+    def test_detects_hardcoded_password_in_assignment(
+        self, engine: RulesEngine, parser: GoParser, tmp_path: Path
+    ):
         """Test detection of hardcoded password in variable assignment."""
         rule = Rule(
             id="GO004",
@@ -163,7 +166,9 @@ func connect() {
         # Should match both the assignment (password :=) and the string literal
         assert len(findings) >= 1
 
-    def test_detects_secret_in_string_literal(self, engine: RulesEngine, parser: GoParser, tmp_path: Path):
+    def test_detects_secret_in_string_literal(
+        self, engine: RulesEngine, parser: GoParser, tmp_path: Path
+    ):
         """Test detection of secrets in string literals."""
         rule = Rule(
             id="GO005",
@@ -334,7 +339,9 @@ class TestGoLanguageFilter:
 
         assert len(findings) == 0
 
-    def test_python_rule_does_not_match_go_file(self, engine: RulesEngine, parser: GoParser, tmp_path: Path):
+    def test_python_rule_does_not_match_go_file(
+        self, engine: RulesEngine, parser: GoParser, tmp_path: Path
+    ):
         """Test Python rules don't match Go files."""
         rule = Rule(
             id="PY001",

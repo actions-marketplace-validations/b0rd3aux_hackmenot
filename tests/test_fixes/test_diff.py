@@ -1,10 +1,10 @@
 """Tests for diff generator."""
 
-import pytest
 from io import StringIO
-from rich.console import Console
 
-from hackmenot.fixes.diff import FileDiff, DiffGenerator
+import pytest
+from hackmenot.fixes.diff import DiffGenerator, FileDiff
+from rich.console import Console
 
 
 class TestFileDiff:

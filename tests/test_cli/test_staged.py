@@ -4,11 +4,9 @@ import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-from typer.testing import CliRunner
-
 from hackmenot.cli.git import get_staged_files, is_git_repo
 from hackmenot.cli.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -84,7 +82,9 @@ class TestStagedFlag:
         (tmp_path / "readme.md").write_text("# README")
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
-            with patch("hackmenot.cli.main.get_staged_files", return_value=[tmp_path / "readme.md"]):
+            with patch(
+                "hackmenot.cli.main.get_staged_files", return_value=[tmp_path / "readme.md"]
+            ):
                 result = runner.invoke(app, ["scan", "--staged"])
                 assert result.exit_code == 0
                 assert "No supported files in staged changes" in result.stdout
@@ -93,11 +93,11 @@ class TestStagedFlag:
         """Test --staged scans Python files correctly."""
         # Create a vulnerable Python file
         vuln_file = tmp_path / "vulnerable.py"
-        vuln_file.write_text('''
+        vuln_file.write_text("""
 def get_user(user_id):
     query = f"SELECT * FROM users WHERE id = {user_id}"
     return db.execute(query)
-''')
+""")
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
             with patch("hackmenot.cli.main.get_staged_files", return_value=[vuln_file]):
@@ -109,10 +109,10 @@ def get_user(user_id):
         """Test --staged scans JavaScript files correctly."""
         # Create a vulnerable JavaScript file
         vuln_file = tmp_path / "app.js"
-        vuln_file.write_text('''
+        vuln_file.write_text("""
 const query = `SELECT * FROM users WHERE id = ${userId}`;
 db.query(query);
-''')
+""")
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
             with patch("hackmenot.cli.main.get_staged_files", return_value=[vuln_file]):
@@ -124,10 +124,10 @@ db.query(query);
         """Test --staged with clean files exits with code 0."""
         # Create a clean Python file
         clean_file = tmp_path / "clean.py"
-        clean_file.write_text('''
+        clean_file.write_text("""
 def hello(name: str) -> str:
     return f"Hello, {name}!"
-''')
+""")
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
             with patch("hackmenot.cli.main.get_staged_files", return_value=[clean_file]):
@@ -138,7 +138,7 @@ def hello(name: str) -> str:
         """Test --staged with multiple staged files."""
         # Create multiple files
         clean_file = tmp_path / "clean.py"
-        clean_file.write_text('def foo(): pass')
+        clean_file.write_text("def foo(): pass")
 
         vuln_file = tmp_path / "vuln.py"
         vuln_file.write_text('query = f"SELECT * FROM t WHERE id = {x}"')
@@ -151,7 +151,7 @@ def hello(name: str) -> str:
     def test_staged_with_json_format(self, tmp_path: Path):
         """Test --staged with JSON output format."""
         clean_file = tmp_path / "main.py"
-        clean_file.write_text('def main(): pass')
+        clean_file.write_text("def main(): pass")
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
             with patch("hackmenot.cli.main.get_staged_files", return_value=[clean_file]):
@@ -163,12 +163,15 @@ def hello(name: str) -> str:
         """Test --staged filters out files that don't exist."""
         # Only create one of the files
         existing_file = tmp_path / "exists.py"
-        existing_file.write_text('def foo(): pass')
+        existing_file.write_text("def foo(): pass")
 
         nonexistent_file = tmp_path / "missing.py"
 
         with patch("hackmenot.cli.main.is_git_repo", return_value=True):
-            with patch("hackmenot.cli.main.get_staged_files", return_value=[existing_file, nonexistent_file]):
+            with patch(
+                "hackmenot.cli.main.get_staged_files",
+                return_value=[existing_file, nonexistent_file],
+            ):
                 result = runner.invoke(app, ["scan", "--staged"])
                 # Should succeed, only scanning the existing file
                 assert result.exit_code == 0

@@ -2,9 +2,8 @@
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
 from hackmenot.cli.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -106,9 +105,9 @@ def test_fix_and_fix_interactive_mutually_exclusive(tmp_path: Path):
 def test_fix_no_findings(tmp_path: Path):
     """Test --fix with no findings produces no changes."""
     test_file = tmp_path / "clean.py"
-    test_file.write_text('x = 1\nprint(x)')
+    test_file.write_text("x = 1\nprint(x)")
 
     result = runner.invoke(app, ["scan", str(tmp_path), "--fix"])
 
     assert result.exit_code == 0
-    assert test_file.read_text() == 'x = 1\nprint(x)'
+    assert test_file.read_text() == "x = 1\nprint(x)"

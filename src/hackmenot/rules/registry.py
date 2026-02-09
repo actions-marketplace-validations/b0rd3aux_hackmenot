@@ -39,7 +39,7 @@ class RuleRegistry:
             if data:
                 rule = self._parse_rule(data)
                 self._rules[rule.id] = rule
-        except Exception as e:
+        except (OSError, yaml.YAMLError, KeyError, TypeError, ValueError) as e:
             # Log error but continue loading other rules
             print(f"Warning: Failed to load rule {file_path}: {e}")
 

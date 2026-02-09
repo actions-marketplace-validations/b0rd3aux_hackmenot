@@ -1,7 +1,7 @@
 """Rules engine for matching patterns against parsed code."""
 
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 from hackmenot.core.models import Finding, Rule
 from hackmenot.parsers.base import ParseResult
@@ -22,7 +22,7 @@ class RulesEngine:
 
     def check(
         self,
-        parse_result: Union[ParseResult, JSParseResult],
+        parse_result: ParseResult | JSParseResult,
         file_path: Path,
         ignores: set[tuple[int, str]] | None = None,
     ) -> list[Finding]:
@@ -58,11 +58,7 @@ class RulesEngine:
 
         # Filter out ignored findings
         if ignores:
-            findings = [
-                f
-                for f in findings
-                if (f.line_number, f.rule_id) not in ignores
-            ]
+            findings = [f for f in findings if (f.line_number, f.rule_id) not in ignores]
 
         return findings
 
@@ -245,7 +241,9 @@ class RulesEngine:
         for assignment in parse_result.get_assignments():
             # Check if the pattern matches the assignment name (target) or value
             matches_name = any(kw in assignment.name for kw in contains)
-            matches_value = assignment.value and any(kw.upper() in assignment.value.upper() for kw in contains)
+            matches_value = assignment.value and any(
+                kw.upper() in assignment.value.upper() for kw in contains
+            )
 
             if matches_name or matches_value:
                 value_preview = assignment.value[:50] if assignment.value else ""
@@ -353,13 +351,15 @@ class RulesEngine:
             names = [n.upper() for n in pattern.get("names", [])]
             for call in parse_result.get_calls():
                 if any(name in call.name.upper() for name in names):
-                    findings.append(self._create_finding(
-                        rule=rule,
-                        file_path=file_path,
-                        line=call.line,
-                        column=call.column,
-                        code_snippet=call.name,
-                    ))
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=call.line,
+                            column=call.column,
+                            code_snippet=call.name,
+                        )
+                    )
 
         elif pattern_type == "string":
             contains = [c.upper() for c in pattern.get("contains", [])]
@@ -367,35 +367,41 @@ class RulesEngine:
             for assign in parse_result.get_assignments():
                 combined = f"{assign.target} {assign.value}".upper()
                 if any(c in combined for c in contains):
-                    findings.append(self._create_finding(
-                        rule=rule,
-                        file_path=file_path,
-                        line=assign.line,
-                        column=assign.column,
-                        code_snippet=f"{assign.target} = {assign.value}",
-                    ))
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=assign.line,
+                            column=assign.column,
+                            code_snippet=f"{assign.target} = {assign.value}",
+                        )
+                    )
             # Check string literals
             for string in parse_result.get_strings():
                 if any(c in string.value.upper() for c in contains):
-                    findings.append(self._create_finding(
-                        rule=rule,
-                        file_path=file_path,
-                        line=string.line,
-                        column=string.column,
-                        code_snippet=string.value,
-                    ))
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=string.line,
+                            column=string.column,
+                            code_snippet=string.value,
+                        )
+                    )
 
         elif pattern_type == "import":
             names = [n.lower() for n in pattern.get("names", [])]
             for imp in parse_result.get_imports():
                 if any(name in imp.lower() for name in names):
-                    findings.append(self._create_finding(
-                        rule=rule,
-                        file_path=file_path,
-                        line=1,
-                        column=0,
-                        code_snippet=f'import "{imp}"',
-                    ))
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=1,
+                            column=0,
+                            code_snippet=f'import "{imp}"',
+                        )
+                    )
 
         return findings
 
@@ -422,25 +428,29 @@ class RulesEngine:
                 if field and contains:
                     field_value = str(resource.config.get(field, ""))
                     if any(c in field_value for c in contains):
-                        findings.append(self._create_finding(
-                            rule=rule,
-                            file_path=file_path,
-                            line=resource.line,
-                            column=0,
-                            code_snippet=f'{resource.resource_type}.{resource.name}',
-                        ))
+                        findings.append(
+                            self._create_finding(
+                                rule=rule,
+                                file_path=file_path,
+                                line=resource.line,
+                                column=0,
+                                code_snippet=f"{resource.resource_type}.{resource.name}",
+                            )
+                        )
 
                 # Check missing block
                 missing_block = pattern.get("missing_block")
                 if missing_block:
                     if missing_block not in resource.config:
-                        findings.append(self._create_finding(
-                            rule=rule,
-                            file_path=file_path,
-                            line=resource.line,
-                            column=0,
-                            code_snippet=f'{resource.resource_type}.{resource.name}',
-                        ))
+                        findings.append(
+                            self._create_finding(
+                                rule=rule,
+                                file_path=file_path,
+                                line=resource.line,
+                                column=0,
+                                code_snippet=f"{resource.resource_type}.{resource.name}",
+                            )
+                        )
 
                 # Check missing field with expected value
                 missing_field = pattern.get("missing_field")
@@ -448,13 +458,15 @@ class RulesEngine:
                 if missing_field is not None:
                     actual = resource.config.get(missing_field)
                     if actual != expected_value:
-                        findings.append(self._create_finding(
-                            rule=rule,
-                            file_path=file_path,
-                            line=resource.line,
-                            column=0,
-                            code_snippet=f'{resource.resource_type}.{resource.name}',
-                        ))
+                        findings.append(
+                            self._create_finding(
+                                rule=rule,
+                                file_path=file_path,
+                                line=resource.line,
+                                column=0,
+                                code_snippet=f"{resource.resource_type}.{resource.name}",
+                            )
+                        )
 
         elif pattern_type == "variable":
             name_contains = [n.lower() for n in pattern.get("name_contains", [])]
@@ -465,25 +477,29 @@ class RulesEngine:
                 default_matches = has_default and var.default is not None
 
                 if name_matches and default_matches:
-                    findings.append(self._create_finding(
-                        rule=rule,
-                        file_path=file_path,
-                        line=var.line,
-                        column=0,
-                        code_snippet=f'variable "{var.name}"',
-                    ))
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=var.line,
+                            column=0,
+                            code_snippet=f'variable "{var.name}"',
+                        )
+                    )
 
         elif pattern_type == "local":
             name_contains = [n.lower() for n in pattern.get("name_contains", [])]
 
             for local in parse_result.locals:
                 if any(c in local.name.lower() for c in name_contains):
-                    findings.append(self._create_finding(
-                        rule=rule,
-                        file_path=file_path,
-                        line=local.line,
-                        column=0,
-                        code_snippet=f'local.{local.name}',
-                    ))
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=local.line,
+                            column=0,
+                            code_snippet=f"local.{local.name}",
+                        )
+                    )
 
         return findings

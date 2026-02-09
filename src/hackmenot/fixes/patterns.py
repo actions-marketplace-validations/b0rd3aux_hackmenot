@@ -3,7 +3,6 @@
 import re
 from dataclasses import dataclass
 
-
 # Placeholder definitions: name -> (regex pattern, description)
 PLACEHOLDERS = {
     "var": (r"(\w+)", "variable name"),
@@ -19,6 +18,7 @@ PLACEHOLDERS = {
 @dataclass
 class ParsedPattern:
     """Result of parsing a fix pattern."""
+
     regex: re.Pattern
     placeholders: list[str]  # Names in order of capture groups
     original: str
@@ -38,9 +38,9 @@ class PatternParser:
         last_end = 0
 
         # Find all {placeholder} in pattern
-        for match in re.finditer(r'\{(\w+)\}', pattern):
+        for match in re.finditer(r"\{(\w+)\}", pattern):
             # Add literal text before this placeholder
-            literal = pattern[last_end:match.start()]
+            literal = pattern[last_end : match.start()]
             regex_parts.append(re.escape(literal))
 
             # Get placeholder name and convert to regex
@@ -64,12 +64,7 @@ class PatternParser:
             original=pattern,
         )
 
-    def apply_replacement(
-        self,
-        source: str,
-        parsed: ParsedPattern,
-        replacement: str
-    ) -> str | None:
+    def apply_replacement(self, source: str, parsed: ParsedPattern, replacement: str) -> str | None:
         """Apply replacement pattern using captured groups.
 
         Returns None if pattern doesn't match.
@@ -84,4 +79,4 @@ class PatternParser:
             result = result.replace(f"{{{name}}}", match.group(i))
 
         # Replace matched portion in source
-        return source[:match.start()] + result + source[match.end():]
+        return source[: match.start()] + result + source[match.end() :]

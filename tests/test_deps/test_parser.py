@@ -3,8 +3,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from hackmenot.deps.parser import Dependency, DependencyParser
 
 
@@ -108,12 +106,9 @@ class TestParsePackageJson:
     def test_dependencies(self, tmp_path: Path) -> None:
         """Test parsing dependencies."""
         pkg_file = tmp_path / "package.json"
-        pkg_file.write_text(json.dumps({
-            "dependencies": {
-                "express": "^4.18.0",
-                "lodash": "~4.17.0"
-            }
-        }))
+        pkg_file.write_text(
+            json.dumps({"dependencies": {"express": "^4.18.0", "lodash": "~4.17.0"}})
+        )
 
         parser = DependencyParser()
         deps = parser.parse_package_json(pkg_file)
@@ -129,12 +124,9 @@ class TestParsePackageJson:
     def test_dev_dependencies(self, tmp_path: Path) -> None:
         """Test parsing devDependencies."""
         pkg_file = tmp_path / "package.json"
-        pkg_file.write_text(json.dumps({
-            "devDependencies": {
-                "jest": "^29.0.0",
-                "eslint": "^8.0.0"
-            }
-        }))
+        pkg_file.write_text(
+            json.dumps({"devDependencies": {"jest": "^29.0.0", "eslint": "^8.0.0"}})
+        )
 
         parser = DependencyParser()
         deps = parser.parse_package_json(pkg_file)
@@ -147,14 +139,11 @@ class TestParsePackageJson:
     def test_both_dependencies(self, tmp_path: Path) -> None:
         """Test parsing both dependencies and devDependencies."""
         pkg_file = tmp_path / "package.json"
-        pkg_file.write_text(json.dumps({
-            "dependencies": {
-                "express": "^4.18.0"
-            },
-            "devDependencies": {
-                "jest": "^29.0.0"
-            }
-        }))
+        pkg_file.write_text(
+            json.dumps(
+                {"dependencies": {"express": "^4.18.0"}, "devDependencies": {"jest": "^29.0.0"}}
+            )
+        )
 
         parser = DependencyParser()
         deps = parser.parse_package_json(pkg_file)
@@ -167,13 +156,11 @@ class TestParsePackageJson:
     def test_version_stripping(self, tmp_path: Path) -> None:
         """Test that version prefixes are stripped."""
         pkg_file = tmp_path / "package.json"
-        pkg_file.write_text(json.dumps({
-            "dependencies": {
-                "express": "^4.18.0",
-                "lodash": "~4.17.0",
-                "react": ">=18.0.0"
-            }
-        }))
+        pkg_file.write_text(
+            json.dumps(
+                {"dependencies": {"express": "^4.18.0", "lodash": "~4.17.0", "react": ">=18.0.0"}}
+            )
+        )
 
         parser = DependencyParser()
         deps = parser.parse_package_json(pkg_file)
@@ -196,10 +183,7 @@ class TestParsePackageJson:
     def test_empty_dependencies(self, tmp_path: Path) -> None:
         """Test handling empty dependencies."""
         pkg_file = tmp_path / "package.json"
-        pkg_file.write_text(json.dumps({
-            "name": "test-package",
-            "version": "1.0.0"
-        }))
+        pkg_file.write_text(json.dumps({"name": "test-package", "version": "1.0.0"}))
 
         parser = DependencyParser()
         deps = parser.parse_package_json(pkg_file)
@@ -213,7 +197,7 @@ class TestParsePyprojectToml:
     def test_dependencies_array(self, tmp_path: Path) -> None:
         """Test parsing dependencies array."""
         pyproject_file = tmp_path / "pyproject.toml"
-        pyproject_file.write_text('''
+        pyproject_file.write_text("""
 [project]
 name = "test-project"
 dependencies = [
@@ -221,7 +205,7 @@ dependencies = [
     "click==8.1.0",
     "flask"
 ]
-''')
+""")
 
         parser = DependencyParser()
         deps = parser.parse_pyproject_toml(pyproject_file)
@@ -238,12 +222,12 @@ dependencies = [
     def test_dependencies_with_extras(self, tmp_path: Path) -> None:
         """Test parsing dependencies with extras."""
         pyproject_file = tmp_path / "pyproject.toml"
-        pyproject_file.write_text('''
+        pyproject_file.write_text("""
 [project]
 dependencies = [
     "requests[security]>=2.28.0"
 ]
-''')
+""")
 
         parser = DependencyParser()
         deps = parser.parse_pyproject_toml(pyproject_file)
@@ -255,11 +239,11 @@ dependencies = [
     def test_no_dependencies(self, tmp_path: Path) -> None:
         """Test handling pyproject.toml without dependencies."""
         pyproject_file = tmp_path / "pyproject.toml"
-        pyproject_file.write_text('''
+        pyproject_file.write_text("""
 [project]
 name = "test-project"
 version = "1.0.0"
-''')
+""")
 
         parser = DependencyParser()
         deps = parser.parse_pyproject_toml(pyproject_file)
@@ -285,11 +269,7 @@ class TestParseDirectory:
     def test_detect_package_json(self, tmp_path: Path) -> None:
         """Test auto-detection of package.json."""
         pkg_file = tmp_path / "package.json"
-        pkg_file.write_text(json.dumps({
-            "dependencies": {
-                "express": "^4.18.0"
-            }
-        }))
+        pkg_file.write_text(json.dumps({"dependencies": {"express": "^4.18.0"}}))
 
         parser = DependencyParser()
         deps = parser.parse_directory(tmp_path)
@@ -301,12 +281,12 @@ class TestParseDirectory:
     def test_detect_pyproject_toml(self, tmp_path: Path) -> None:
         """Test auto-detection of pyproject.toml."""
         pyproject_file = tmp_path / "pyproject.toml"
-        pyproject_file.write_text('''
+        pyproject_file.write_text("""
 [project]
 dependencies = [
     "flask>=2.0.0"
 ]
-''')
+""")
 
         parser = DependencyParser()
         deps = parser.parse_directory(tmp_path)
@@ -321,11 +301,7 @@ dependencies = [
         req_file.write_text("requests==2.28.0\n")
 
         pkg_file = tmp_path / "package.json"
-        pkg_file.write_text(json.dumps({
-            "dependencies": {
-                "express": "^4.18.0"
-            }
-        }))
+        pkg_file.write_text(json.dumps({"dependencies": {"express": "^4.18.0"}}))
 
         parser = DependencyParser()
         deps = parser.parse_directory(tmp_path)
@@ -352,7 +328,7 @@ class TestDependencyDataclass:
             name="requests",
             version="2.28.0",
             ecosystem="pypi",
-            source_file="/path/to/requirements.txt"
+            source_file="/path/to/requirements.txt",
         )
 
         assert dep.name == "requests"

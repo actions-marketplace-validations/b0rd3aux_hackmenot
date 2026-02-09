@@ -3,12 +3,11 @@
 from pathlib import Path
 
 import pytest
-from typer.testing import CliRunner
-
 from hackmenot.cli.main import app
 from hackmenot.core.scanner import Scanner
 from hackmenot.fixes.engine import FixEngine
 from hackmenot.rules.registry import RuleRegistry
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -21,14 +20,14 @@ class TestAutoFixIntegration:
         # Create file with fixable vulnerability (InsecureSkipVerify)
         # Go files work well because the finding line matches the pattern
         go_file = tmp_path / "client.go"
-        original = '''package main
+        original = """package main
 
 import "crypto/tls"
 
 func main() {
     config := &tls.Config{InsecureSkipVerify: true}
 }
-'''
+"""
         go_file.write_text(original)
 
         # Run scan with --fix
@@ -36,21 +35,21 @@ func main() {
 
         # Check the file was modified
         fixed = go_file.read_text()
-        assert 'InsecureSkipVerify: false' in fixed
-        assert 'InsecureSkipVerify: true' not in fixed
+        assert "InsecureSkipVerify: false" in fixed
+        assert "InsecureSkipVerify: true" not in fixed
 
     def test_dry_run_shows_diff_without_modifying(self, tmp_path: Path):
         """Test that --dry-run shows diff but doesn't modify files."""
         # Create file with fixable vulnerability
         go_file = tmp_path / "client.go"
-        original = '''package main
+        original = """package main
 
 import "crypto/tls"
 
 func main() {
     config := &tls.Config{InsecureSkipVerify: true}
 }
-'''
+"""
         go_file.write_text(original)
 
         # Run scan with --fix --dry-run
@@ -90,19 +89,19 @@ def other_function():
 
         # Check only the md5 line was changed
         final = py_file.read_text()
-        assert 'def hash_data(data):' in final
+        assert "def hash_data(data):" in final
         assert '"""Hash the data securely."""' in final
-        assert 'def other_function():' in final
+        assert "def other_function():" in final
         assert 'return "unchanged"' in final
 
     def test_multiple_fixes_in_same_file(self, tmp_path: Path):
         """Test applying multiple fixes to the same file."""
         py_file = tmp_path / "multi.py"
-        original = '''import hashlib
+        original = """import hashlib
 
 hash1 = hashlib.md5(data1)
 hash2 = hashlib.sha1(data2)
-'''
+"""
         py_file.write_text(original)
 
         # Use the fix engine directly
@@ -167,18 +166,16 @@ class TestDiffPreview:
     def test_diff_flag_shows_unified_diff(self, tmp_path: Path):
         """Test that --diff shows unified diff format."""
         go_file = tmp_path / "client.go"
-        go_file.write_text('''package main
+        go_file.write_text("""package main
 
 import "crypto/tls"
 
 func main() {
     config := &tls.Config{InsecureSkipVerify: true}
 }
-''')
+""")
 
-        result = runner.invoke(
-            app, ["scan", str(tmp_path), "--fix", "--dry-run", "--diff"]
-        )
+        result = runner.invoke(app, ["scan", str(tmp_path), "--fix", "--dry-run", "--diff"])
 
         # Should exit with findings (exit code 1)
         assert result.exit_code == 1
@@ -186,13 +183,11 @@ func main() {
     def test_no_diff_when_no_fixes(self, tmp_path: Path):
         """Test that clean code shows no fixes."""
         py_file = tmp_path / "clean.py"
-        py_file.write_text('''def hello():
+        py_file.write_text("""def hello():
     return "world"
-''')
+""")
 
-        result = runner.invoke(
-            app, ["scan", str(tmp_path), "--fix", "--dry-run"]
-        )
+        result = runner.invoke(app, ["scan", str(tmp_path), "--fix", "--dry-run"])
 
         # Should exit cleanly
         assert result.exit_code == 0

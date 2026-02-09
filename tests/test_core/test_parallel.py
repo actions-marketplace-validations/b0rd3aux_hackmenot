@@ -12,11 +12,11 @@ def test_parallel_scan_finds_all_vulnerabilities(tmp_path: Path):
     # Create 10 files with SQL injection vulnerabilities
     for i in range(10):
         vuln_file = tmp_path / f"vuln_{i}.py"
-        vuln_file.write_text(f'''
+        vuln_file.write_text(f"""
 def get_data_{i}(user_input):
     query = f"SELECT * FROM table_{i} WHERE id = {{user_input}}"
     return db.execute(query)
-''')
+""")
 
     result = scanner.scan([tmp_path], parallel=True)
 
@@ -32,11 +32,11 @@ def test_parallel_scan_faster_than_sequential(tmp_path: Path):
     # Create 20 files with vulnerabilities
     for i in range(20):
         vuln_file = tmp_path / f"test_{i}.py"
-        vuln_file.write_text(f'''
+        vuln_file.write_text(f"""
 def process_{i}(data):
     sql = f"INSERT INTO logs VALUES ({{data}})"
     return execute(sql)
-''')
+""")
 
     # Verify parallel scan works and finds all vulnerabilities
     result = scanner.scan([tmp_path], parallel=True, max_workers=4)
@@ -52,11 +52,11 @@ def test_parallel_scan_handles_errors_gracefully(tmp_path: Path):
     # Create valid Python files with vulnerabilities
     for i in range(5):
         valid_file = tmp_path / f"valid_{i}.py"
-        valid_file.write_text(f'''
+        valid_file.write_text(f"""
 def func_{i}(x):
     query = f"SELECT * FROM t WHERE id = {{x}}"
     return query
-''')
+""")
 
     # Create a file with syntax errors
     bad_file = tmp_path / "bad_syntax.py"
@@ -65,11 +65,11 @@ def func_{i}(x):
     # Create more valid files after the bad one
     for i in range(5, 8):
         valid_file = tmp_path / f"valid_{i}.py"
-        valid_file.write_text(f'''
+        valid_file.write_text(f"""
 def func_{i}(y):
     sql = f"DELETE FROM t WHERE id = {{y}}"
     return sql
-''')
+""")
 
     result = scanner.scan([tmp_path], parallel=True)
 
@@ -105,11 +105,11 @@ def test_parallel_scan_with_cache(tmp_path: Path):
     # Create files with vulnerabilities
     for i in range(5):
         vuln_file = tmp_path / f"cached_{i}.py"
-        vuln_file.write_text(f'''
+        vuln_file.write_text(f"""
 def get_{i}(data):
     query = f"SELECT * FROM t_{i} WHERE id = {{data}}"
     return query
-''')
+""")
 
     # First scan - should populate cache
     result1 = scanner.scan([tmp_path], parallel=True, use_cache=True)

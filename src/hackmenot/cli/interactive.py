@@ -3,7 +3,6 @@
 from pathlib import Path
 
 from rich.console import Console
-from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.syntax import Syntax
 
@@ -28,9 +27,7 @@ class InteractiveFixer:
         registry.load_all()
         self.rules = {rule.id: rule for rule in registry.get_all_rules()}
 
-    def run(
-        self, findings: list[Finding], file_contents: dict[str, str]
-    ) -> dict[str, str]:
+    def run(self, findings: list[Finding], file_contents: dict[str, str]) -> dict[str, str]:
         """Run interactive fix mode.
 
         Shows each finding with its fix suggestion and prompts the user
@@ -56,10 +53,8 @@ class InteractiveFixer:
                 findings_by_file[finding.file_path].append(finding)
 
         # Sort each file's findings by line number descending
-        for file_path in findings_by_file:
-            findings_by_file[file_path].sort(
-                key=lambda f: f.line_number, reverse=True
-            )
+        for file_findings in findings_by_file.values():
+            file_findings.sort(key=lambda f: f.line_number, reverse=True)
 
         total_findings = sum(len(f) for f in findings_by_file.values())
         current = 0
@@ -87,9 +82,7 @@ class InteractiveFixer:
                     self.console.print("[yellow]Quit - stopping fix mode[/yellow]")
                     return result
                 elif action == "A":
-                    self.console.print(
-                        "[green]Applying all remaining fixes...[/green]"
-                    )
+                    self.console.print("[green]Applying all remaining fixes...[/green]")
                     apply_all = True
                     self._apply_fix(finding, result)
                 elif action == "a":
@@ -101,9 +94,7 @@ class InteractiveFixer:
         self.console.print("\n[bold green]Done![/bold green] Interactive fix mode complete.")
         return result
 
-    def _show_finding(
-        self, finding: Finding, current: int, total: int
-    ) -> None:
+    def _show_finding(self, finding: Finding, current: int, total: int) -> None:
         """Display a finding with its fix suggestion.
 
         Args:
@@ -116,9 +107,7 @@ class InteractiveFixer:
             f"[bold]Finding {current}/{total}[/bold] - "
             f"[cyan]{finding.rule_id}[/cyan]: {finding.rule_name}"
         )
-        self.console.print(
-            f"[dim]{finding.file_path}:{finding.line_number}[/dim]"
-        )
+        self.console.print(f"[dim]{finding.file_path}:{finding.line_number}[/dim]")
         self.console.print()
 
         # Show the problematic code
@@ -143,13 +132,9 @@ class InteractiveFixer:
         self.console.print(fix_syntax)
         self.console.print()
 
-        self.console.print(
-            "[dim]\\[a]pply  \\[s]kip  \\[A]pply all  \\[q]uit[/dim]"
-        )
+        self.console.print("[dim]\\[a]pply  \\[s]kip  \\[A]pply all  \\[q]uit[/dim]")
 
-    def _apply_fix(
-        self, finding: Finding, file_contents: dict[str, str]
-    ) -> None:
+    def _apply_fix(self, finding: Finding, file_contents: dict[str, str]) -> None:
         """Apply a fix to the file contents.
 
         Args:
@@ -217,9 +202,7 @@ def apply_fixes_auto(
     return result, total_applied
 
 
-def write_fixed_files(
-    file_contents: dict[str, str], original_contents: dict[str, str]
-) -> int:
+def write_fixed_files(file_contents: dict[str, str], original_contents: dict[str, str]) -> int:
     """Write modified files back to disk.
 
     Only writes files that have been modified.

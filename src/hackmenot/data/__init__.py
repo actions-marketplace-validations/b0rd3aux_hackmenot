@@ -11,4 +11,6 @@ def load_package_set(ecosystem: str) -> set[str]:
     filepath = DATA_DIR / filename
     if not filepath.exists():
         return set()
-    return set(line.strip().lower() for line in filepath.read_text().strip().split("\n") if line.strip())
+    return set(
+        line.strip().lower() for line in filepath.read_text().strip().split("\n") if line.strip()
+    )

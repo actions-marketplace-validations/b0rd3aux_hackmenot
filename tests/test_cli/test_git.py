@@ -4,9 +4,8 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from typer.testing import CliRunner
-
 from hackmenot.cli.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -16,7 +15,9 @@ def test_get_changed_files_since_commit(tmp_path: Path, monkeypatch: pytest.Monk
     # Create a git repo with some history
     monkeypatch.chdir(tmp_path)
     subprocess.run(["git", "init"], capture_output=True, check=True)
-    subprocess.run(["git", "config", "user.email", "test@test.com"], capture_output=True, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@test.com"], capture_output=True, check=True
+    )
     subprocess.run(["git", "config", "user.name", "Test"], capture_output=True, check=True)
 
     # Create initial commit
@@ -25,7 +26,9 @@ def test_get_changed_files_since_commit(tmp_path: Path, monkeypatch: pytest.Monk
     subprocess.run(["git", "commit", "-m", "initial"], capture_output=True, check=True)
 
     # Get the commit SHA
-    result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    )
     initial_sha = result.stdout.strip()
 
     # Create more changes
@@ -35,6 +38,7 @@ def test_get_changed_files_since_commit(tmp_path: Path, monkeypatch: pytest.Monk
 
     # Get changed files since initial commit
     from hackmenot.cli.git import get_changed_files
+
     changed = get_changed_files(initial_sha)
 
     assert len(changed) == 1
@@ -44,6 +48,7 @@ def test_get_changed_files_since_commit(tmp_path: Path, monkeypatch: pytest.Monk
 def test_get_changed_files_invalid_ref() -> None:
     """Test that invalid ref returns empty list."""
     from hackmenot.cli.git import get_changed_files
+
     changed = get_changed_files("nonexistent-ref-abc123")
     assert changed == []
 
@@ -54,7 +59,9 @@ def test_scan_changed_since_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
     # Create git repo
     subprocess.run(["git", "init"], capture_output=True, check=True)
-    subprocess.run(["git", "config", "user.email", "test@test.com"], capture_output=True, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@test.com"], capture_output=True, check=True
+    )
     subprocess.run(["git", "config", "user.name", "Test"], capture_output=True, check=True)
 
     # Initial commit
@@ -62,7 +69,9 @@ def test_scan_changed_since_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     subprocess.run(["git", "add", "."], capture_output=True, check=True)
     subprocess.run(["git", "commit", "-m", "initial"], capture_output=True, check=True)
 
-    result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    )
     initial_sha = result.stdout.strip()
 
     # Add file with vulnerability (SQL injection)
@@ -77,7 +86,9 @@ def test_scan_changed_since_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert "vuln.py" in result.stdout
 
 
-def test_scan_changed_since_requires_git_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_scan_changed_since_requires_git_repo(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test --changed-since requires a git repository."""
     from unittest.mock import patch
 
@@ -93,7 +104,9 @@ def test_scan_changed_since_no_changes(tmp_path: Path, monkeypatch: pytest.Monke
 
     # Create git repo
     subprocess.run(["git", "init"], capture_output=True, check=True)
-    subprocess.run(["git", "config", "user.email", "test@test.com"], capture_output=True, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@test.com"], capture_output=True, check=True
+    )
     subprocess.run(["git", "config", "user.name", "Test"], capture_output=True, check=True)
 
     # Create and commit a file
@@ -101,7 +114,9 @@ def test_scan_changed_since_no_changes(tmp_path: Path, monkeypatch: pytest.Monke
     subprocess.run(["git", "add", "."], capture_output=True, check=True)
     subprocess.run(["git", "commit", "-m", "initial"], capture_output=True, check=True)
 
-    result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    )
     latest_sha = result.stdout.strip()
 
     # Scan since the latest commit (no changes)
@@ -110,13 +125,17 @@ def test_scan_changed_since_no_changes(tmp_path: Path, monkeypatch: pytest.Monke
     assert f"No files changed since {latest_sha}" in result.stdout
 
 
-def test_scan_changed_since_no_supported_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_scan_changed_since_no_supported_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test --changed-since with changes but no supported file types."""
     monkeypatch.chdir(tmp_path)
 
     # Create git repo
     subprocess.run(["git", "init"], capture_output=True, check=True)
-    subprocess.run(["git", "config", "user.email", "test@test.com"], capture_output=True, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@test.com"], capture_output=True, check=True
+    )
     subprocess.run(["git", "config", "user.name", "Test"], capture_output=True, check=True)
 
     # Initial commit
@@ -124,7 +143,9 @@ def test_scan_changed_since_no_supported_files(tmp_path: Path, monkeypatch: pyte
     subprocess.run(["git", "add", "."], capture_output=True, check=True)
     subprocess.run(["git", "commit", "-m", "initial"], capture_output=True, check=True)
 
-    result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    )
     initial_sha = result.stdout.strip()
 
     # Add a file with unsupported extension
@@ -138,17 +159,21 @@ def test_scan_changed_since_no_supported_files(tmp_path: Path, monkeypatch: pyte
     assert "No supported files in changes" in result.stdout
 
 
-def test_staged_and_changed_since_mutually_exclusive(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_staged_and_changed_since_mutually_exclusive(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test that --staged and --changed-since cannot be used together."""
-    from typer.testing import CliRunner
     from hackmenot.cli.main import app
+    from typer.testing import CliRunner
 
     runner = CliRunner()
     monkeypatch.chdir(tmp_path)
 
     # Create a minimal git repo
     subprocess.run(["git", "init"], capture_output=True, check=True)
-    subprocess.run(["git", "config", "user.email", "test@test.com"], capture_output=True, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@test.com"], capture_output=True, check=True
+    )
     subprocess.run(["git", "config", "user.name", "Test"], capture_output=True, check=True)
 
     result = runner.invoke(app, ["scan", "--staged", "--changed-since", "HEAD"])

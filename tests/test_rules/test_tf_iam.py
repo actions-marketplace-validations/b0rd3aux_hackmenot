@@ -1,9 +1,6 @@
 """Tests for Terraform IAM rules (TF_IAM001-TF_IAM003)."""
 
-from pathlib import Path
-
 import pytest
-
 from hackmenot.core.scanner import Scanner
 
 
@@ -17,7 +14,7 @@ class TestTerraformIAMRules:
     def test_wildcard_action_detected(self, scanner, tmp_path):
         """Test TF_IAM001 detects IAM policy with wildcard action."""
         tf_file = tmp_path / "main.tf"
-        tf_file.write_text('''
+        tf_file.write_text("""
 resource "aws_iam_policy" "wildcard_policy" {
   name        = "overly-permissive-policy"
   description = "Policy with wildcard action"
@@ -32,7 +29,7 @@ resource "aws_iam_policy" "wildcard_policy" {
     ]
   })
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "TF_IAM001"]
         assert len(findings) == 1
@@ -41,7 +38,7 @@ resource "aws_iam_policy" "wildcard_policy" {
     def test_wildcard_resource_detected(self, scanner, tmp_path):
         """Test TF_IAM002 detects IAM policy with wildcard resource."""
         tf_file = tmp_path / "main.tf"
-        tf_file.write_text('''
+        tf_file.write_text("""
 resource "aws_iam_policy" "wildcard_resource_policy" {
   name        = "overly-broad-policy"
   description = "Policy with wildcard resource"
@@ -56,7 +53,7 @@ resource "aws_iam_policy" "wildcard_resource_policy" {
     ]
   })
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "TF_IAM002"]
         assert len(findings) == 1
@@ -65,7 +62,7 @@ resource "aws_iam_policy" "wildcard_resource_policy" {
     def test_admin_policy_attachment_detected(self, scanner, tmp_path):
         """Test TF_IAM003 detects AdministratorAccess policy attachment."""
         tf_file = tmp_path / "main.tf"
-        tf_file.write_text('''
+        tf_file.write_text("""
 resource "aws_iam_role" "admin_role" {
   name = "admin-role"
   assume_role_policy = jsonencode({
@@ -84,7 +81,7 @@ resource "aws_iam_role_policy_attachment" "admin_attachment" {
   role       = aws_iam_role.admin_role.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "TF_IAM003"]
         assert len(findings) == 1
@@ -93,7 +90,7 @@ resource "aws_iam_role_policy_attachment" "admin_attachment" {
     def test_secure_iam_no_findings(self, scanner, tmp_path):
         """Test that properly scoped IAM policies have no TF_IAM findings."""
         tf_file = tmp_path / "main.tf"
-        tf_file.write_text('''
+        tf_file.write_text("""
 resource "aws_iam_policy" "secure_policy" {
   name        = "secure-s3-policy"
   description = "Policy with specific actions and resources"
@@ -127,7 +124,7 @@ resource "aws_iam_role_policy_attachment" "app_policy_attachment" {
   role       = aws_iam_role.app_role.name
   policy_arn = aws_iam_policy.secure_policy.arn
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         iam_findings = [f for f in result.findings if f.rule_id.startswith("TF_IAM")]
         assert len(iam_findings) == 0

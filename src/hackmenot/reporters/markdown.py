@@ -23,13 +23,17 @@ class MarkdownReporter(BaseReporter):
         if not result.has_findings:
             lines.append("✅ **No security issues found!**\n")
         else:
-            lines.append(f"**Found {len(result.findings)} issues** in {result.files_scanned} files scanned\n")
+            lines.append(
+                f"**Found {len(result.findings)} issues** in {result.files_scanned} files scanned\n"
+            )
             lines.append(self._severity_table(result))
             lines.append("")
             lines.append(self._findings_list(result))
 
         lines.append("\n---")
-        lines.append(f"*Scanned by [hackmenot](https://github.com/hackmenot/hackmenot) v{__version__}*")
+        lines.append(
+            f"*Scanned by [hackmenot](https://github.com/hackmenot/hackmenot) v{__version__}*"
+        )
         return "\n".join(lines)
 
     def _severity_table(self, result: ScanResult) -> str:

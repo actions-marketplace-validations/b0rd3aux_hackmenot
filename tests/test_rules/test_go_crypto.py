@@ -1,9 +1,6 @@
 """Tests for Go crypto rules."""
 
-from pathlib import Path
-
 import pytest
-
 from hackmenot.core.scanner import Scanner
 
 
@@ -17,7 +14,7 @@ class TestGoCryptoRules:
     def test_weak_hash_md5_detected(self, scanner, tmp_path):
         """Test GO_CRY001 detects MD5 usage."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 import "crypto/md5"
@@ -26,7 +23,7 @@ func hash(data []byte) []byte {
     h := md5.Sum(data)
     return h[:]
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_CRY001"]
         assert len(findings) >= 1
@@ -34,7 +31,7 @@ func hash(data []byte) []byte {
     def test_weak_hash_sha1_detected(self, scanner, tmp_path):
         """Test GO_CRY002 detects SHA1 usage."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 import "crypto/sha1"
@@ -43,7 +40,7 @@ func hash(data []byte) []byte {
     h := sha1.Sum(data)
     return h[:]
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_CRY002"]
         assert len(findings) >= 1
@@ -51,7 +48,7 @@ func hash(data []byte) []byte {
     def test_insecure_tls_detected(self, scanner, tmp_path):
         """Test GO_CRY003 detects InsecureSkipVerify."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 import (
@@ -65,7 +62,7 @@ func createClient() *http.Client {
     }
     return &http.Client{Transport: tr}
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_CRY003"]
         assert len(findings) >= 1
@@ -73,7 +70,7 @@ func createClient() *http.Client {
     def test_weak_random_detected(self, scanner, tmp_path):
         """Test GO_CRY004 detects math/rand usage."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 import "math/rand"
@@ -81,7 +78,7 @@ import "math/rand"
 func generateToken() int {
     return rand.Int()
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_CRY004"]
         assert len(findings) >= 1
@@ -89,7 +86,7 @@ func generateToken() int {
     def test_hardcoded_iv_detected(self, scanner, tmp_path):
         """Test GO_CRY005 detects hardcoded IV."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 func encrypt(data []byte) []byte {
@@ -97,7 +94,7 @@ func encrypt(data []byte) []byte {
     nonce := "hardcoded_nonce_value"
     return data
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_CRY005"]
         assert len(findings) >= 1
@@ -105,7 +102,7 @@ func encrypt(data []byte) []byte {
     def test_clean_crypto_code_no_findings(self, scanner, tmp_path):
         """Test that secure Go crypto code has no crypto findings."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 import (
@@ -122,7 +119,7 @@ func secureRandom() []byte {
     rand.Read(bytes)
     return bytes
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         crypto_findings = [f for f in result.findings if f.rule_id.startswith("GO_CRY")]
         assert len(crypto_findings) == 0

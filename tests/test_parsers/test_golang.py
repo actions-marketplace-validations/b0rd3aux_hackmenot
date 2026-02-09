@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-import pytest
-
-from hackmenot.parsers.golang import GoParser, GoCallInfo, GoAssignmentInfo, GoStringInfo, GoParseResult
+from hackmenot.parsers.golang import (
+    GoParser,
+)
 
 
 class TestGoParserBasics:
@@ -13,14 +13,14 @@ class TestGoParserBasics:
     def test_parse_simple_function_call(self):
         """Test parsing a simple fmt.Println call."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 import "fmt"
 
 func main() {
     fmt.Println("Hello, World!")
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert not result.has_error
@@ -31,12 +31,12 @@ func main() {
     def test_parse_db_query_call(self):
         """Test parsing a database query call."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 func queryUser(db *sql.DB, userID string) {
     db.Query("SELECT * FROM users WHERE id = " + userID)
 }
-'''
+"""
         result = parser.parse_string(source)
 
         calls = result.get_calls()
@@ -46,14 +46,14 @@ func queryUser(db *sql.DB, userID string) {
     def test_parse_exec_command_call(self):
         """Test parsing exec.Command call."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 import "os/exec"
 
 func runCommand(cmd string) {
     exec.Command("sh", "-c", cmd)
 }
-'''
+"""
         result = parser.parse_string(source)
 
         calls = result.get_calls()
@@ -67,13 +67,13 @@ class TestGoAssignmentExtraction:
     def test_parse_variable_assignment_with_password(self):
         """Test parsing variable assignment containing password."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 func main() {
     password := "supersecret123"
     apiKey := "AKIAIOSFODNN7EXAMPLE"
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assignments = result.get_assignments()
@@ -84,14 +84,14 @@ func main() {
     def test_parse_regular_assignment(self):
         """Test parsing regular = assignment."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 var secret string
 
 func main() {
     secret = "hidden_value"
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assignments = result.get_assignments()
@@ -105,13 +105,13 @@ class TestGoStringExtraction:
     def test_parse_string_literals(self):
         """Test parsing string literals."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 func main() {
     query := "SELECT * FROM users"
     msg := "Hello World"
 }
-'''
+"""
         result = parser.parse_string(source)
 
         strings = result.get_strings()
@@ -122,14 +122,14 @@ func main() {
     def test_parse_raw_string_literals(self):
         """Test parsing raw string literals (backtick strings)."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 func main() {
     query := `SELECT *
 FROM users
 WHERE id = ?`
 }
-'''
+"""
         result = parser.parse_string(source)
 
         strings = result.get_strings()
@@ -140,7 +140,7 @@ WHERE id = ?`
     def test_parse_fmt_sprintf_formatted_string(self):
         """Test parsing fmt.Sprintf as formatted string."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 import "fmt"
 
@@ -148,7 +148,7 @@ func main() {
     name := "Alice"
     msg := fmt.Sprintf("Hello, %s!", name)
 }
-'''
+"""
         result = parser.parse_string(source)
 
         calls = result.get_calls()
@@ -165,14 +165,14 @@ class TestGoFileOperations:
         """Test parsing a Go file from disk."""
         parser = GoParser()
         go_file = tmp_path / "main.go"
-        go_file.write_text('''package main
+        go_file.write_text("""package main
 
 import "fmt"
 
 func main() {
     fmt.Println("test")
 }
-''')
+""")
         result = parser.parse_file(go_file)
 
         assert not result.has_error
@@ -194,12 +194,12 @@ func main() {
         """Test parsing invalid Go code doesn't crash."""
         parser = GoParser()
         go_file = tmp_path / "invalid.go"
-        go_file.write_text('''package main
+        go_file.write_text("""package main
 
 func broken( {
     // syntax error
 }
-''')
+""")
         result = parser.parse_file(go_file)
 
         # Should not crash, tree-sitter is error tolerant
@@ -212,14 +212,14 @@ class TestGoMethodCallExtraction:
     def test_parse_method_calls_on_objects(self):
         """Test parsing method calls on objects."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 func example() {
     client := &http.Client{}
     resp, _ := client.Get("http://example.com")
     resp.Body.Close()
 }
-'''
+"""
         result = parser.parse_string(source)
 
         calls = result.get_calls()
@@ -229,14 +229,14 @@ func example() {
     def test_call_info_captures_arguments(self):
         """Test that CallInfo captures function arguments."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 import "os/exec"
 
 func main() {
     exec.Command("bash", "-c", "echo hello")
 }
-'''
+"""
         result = parser.parse_string(source)
 
         calls = result.get_calls()
@@ -252,7 +252,7 @@ class TestGoSecurityPatterns:
     def test_parse_tls_config_insecure_skip_verify(self):
         """Test parsing TLS config with InsecureSkipVerify."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 import "crypto/tls"
 
@@ -261,7 +261,7 @@ func insecureClient() {
         InsecureSkipVerify: true,
     }
 }
-'''
+"""
         result = parser.parse_string(source)
 
         # Should extract assignments or the config literal
@@ -276,7 +276,7 @@ class TestGoImportExtraction:
     def test_parse_import_statements(self):
         """Test parsing import statements."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 import (
     "fmt"
@@ -285,7 +285,7 @@ import (
 )
 
 func main() {}
-'''
+"""
         result = parser.parse_string(source)
 
         imports = result.get_imports()
@@ -296,14 +296,14 @@ func main() {}
     def test_parse_single_import(self):
         """Test parsing single import statement."""
         parser = GoParser()
-        source = '''package main
+        source = """package main
 
 import "fmt"
 
 func main() {
     fmt.Println("hello")
 }
-'''
+"""
         result = parser.parse_string(source)
 
         imports = result.get_imports()

@@ -1,0 +1,54 @@
+# Pre-commit hooks for hackmenot
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Ruff - fast Python linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Type checking with mypy (warning only - has pre-existing issues)
+  # Run manually: mypy src/ --ignore-missing-imports
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.8.0
+  #   hooks:
+  #     - id: mypy
+  #       additional_dependencies:
+  #         - types-PyYAML
+  #       args: [--ignore-missing-imports]
+  #       files: ^src/
+
+  # Security scanning with our own tool
+  - repo: local
+    hooks:
+      - id: hackmenot-scan
+        name: hackmenot security scan
+        entry: python -m hackmenot scan src/ --fail-on high --ci
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      # Claude Code review hook (optional - requires claude CLI)
+      - id: claude-review
+        name: Claude Code review
+        entry: .hooks/claude-review.sh
+        language: script
+        pass_filenames: false
+        stages: [pre-commit]
+        verbose: true

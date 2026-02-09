@@ -23,7 +23,7 @@ class Config:
 class ConfigLoader:
     """Loads configuration from .hackmenot.yml files."""
 
-    CONFIG_FILENAMES = [".hackmenot.yml", ".hackmenot.yaml"]
+    CONFIG_FILENAMES = (".hackmenot.yml", ".hackmenot.yaml")
 
     def __init__(self, global_config_dir: Path | None = None) -> None:
         """Initialize ConfigLoader.
@@ -106,9 +106,7 @@ class ConfigLoader:
             content = yaml.safe_load(f)
             return content if content else {}
 
-    def _merge_config(
-        self, base: dict[str, Any], override: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _merge_config(self, base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
         """Merge override config into base config.
 
         Override values replace base values (no deep merge).

@@ -2,10 +2,8 @@
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
 from hackmenot.cli.main import app
-from hackmenot.deps.scanner import DependencyScanner
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -16,10 +14,7 @@ class TestDependencyIntegration:
     def test_full_scan_python_project(self, tmp_path: Path):
         """Test full dependency scan on Python project."""
         (tmp_path / "requirements.txt").write_text(
-            "requests==2.31.0\n"
-            "flask==2.0.0\n"
-            "fake-hallucinated-pkg\n"
-            "requets==1.0.0\n"
+            "requests==2.31.0\n" "flask==2.0.0\n" "fake-hallucinated-pkg\n" "requets==1.0.0\n"
         )
 
         result = runner.invoke(app, ["deps", str(tmp_path)])
@@ -49,6 +44,7 @@ class TestDependencyIntegration:
         result = runner.invoke(app, ["deps", str(tmp_path), "--format", "json"])
 
         import json
+
         data = json.loads(result.stdout)
         assert "files_scanned" in data
         assert "findings" in data

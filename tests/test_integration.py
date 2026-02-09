@@ -3,9 +3,8 @@
 import json
 from pathlib import Path
 
-from typer.testing import CliRunner
-
 from hackmenot.cli.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -76,10 +75,7 @@ def test_full_scan_workflow(tmp_path: Path):
 def test_scan_specific_file(tmp_path: Path):
     """Test scanning a specific file."""
     sample_project = _create_sample_project(tmp_path)
-    result = runner.invoke(app, [
-        "scan",
-        str(sample_project / "src" / "utils.py")
-    ])
+    result = runner.invoke(app, ["scan", str(sample_project / "src" / "utils.py")])
 
     # Clean file should pass
     assert result.exit_code == 0
@@ -88,11 +84,7 @@ def test_scan_specific_file(tmp_path: Path):
 def test_json_output_valid(tmp_path: Path):
     """Test JSON output is valid."""
     sample_project = _create_sample_project(tmp_path)
-    result = runner.invoke(app, [
-        "scan",
-        str(sample_project),
-        "--format", "json"
-    ])
+    result = runner.invoke(app, ["scan", str(sample_project), "--format", "json"])
 
     # Should be valid JSON
     data = json.loads(result.stdout)
@@ -105,11 +97,7 @@ def test_severity_filtering(tmp_path: Path):
     """Test severity filtering works."""
     sample_project = _create_sample_project(tmp_path)
     # With high severity filter, should still find critical SQL injection
-    result = runner.invoke(app, [
-        "scan",
-        str(sample_project),
-        "--severity", "high"
-    ])
+    result = runner.invoke(app, ["scan", str(sample_project), "--severity", "high"])
 
     assert result.exit_code == 1
     assert "INJ001" in result.stdout
@@ -140,9 +128,7 @@ def test_rules_show_specific():
 def test_config_file_loading_e2e(tmp_path: Path):
     """Test config file is loaded and applied during scan."""
     # Create config file that disables INJ001
-    (tmp_path / ".hackmenot.yml").write_text(
-        "rules:\n  disable:\n    - INJ001\n"
-    )
+    (tmp_path / ".hackmenot.yml").write_text("rules:\n  disable:\n    - INJ001\n")
 
     # Create vulnerable file that would trigger INJ001
     (tmp_path / "test.py").write_text('query = f"SELECT * FROM {x}"')
@@ -159,9 +145,7 @@ def test_config_file_explicit_path(tmp_path: Path):
     # Create config file in a non-standard location
     config_dir = tmp_path / "configs"
     config_dir.mkdir()
-    (config_dir / "custom.yml").write_text(
-        "rules:\n  disable:\n    - INJ001\n"
-    )
+    (config_dir / "custom.yml").write_text("rules:\n  disable:\n    - INJ001\n")
 
     # Create vulnerable file
     src_dir = tmp_path / "src"
@@ -182,9 +166,9 @@ def test_inline_ignores_e2e(tmp_path: Path):
     """Test inline ignore comments suppress findings."""
     # Create file with inline ignore comment
     (tmp_path / "test.py").write_text(
-        '''# hackmenot:ignore-next-line[INJ001] - test case for ignore
+        """# hackmenot:ignore-next-line[INJ001] - test case for ignore
 query = f"SELECT * FROM {x}"
-'''
+"""
     )
 
     # Run scan
@@ -212,10 +196,10 @@ def test_inline_ignores_file_level(tmp_path: Path):
     """Test file-level ignore suppresses all findings."""
     # Create file with file-level ignore
     (tmp_path / "test.py").write_text(
-        '''# hackmenot:ignore-file - legacy file
+        """# hackmenot:ignore-file - legacy file
 query = f"SELECT * FROM {x}"
 another = f"DELETE FROM {table}"
-'''
+"""
     )
 
     # Run scan
@@ -229,9 +213,9 @@ def test_inline_ignores_require_reason(tmp_path: Path):
     """Test that inline ignores without reason are not honored."""
     # Create file with invalid ignore comment (no reason)
     (tmp_path / "test.py").write_text(
-        '''# hackmenot:ignore-next-line[INJ001]
+        """# hackmenot:ignore-next-line[INJ001]
 query = f"SELECT * FROM {x}"
-'''
+"""
     )
 
     # Run scan
@@ -299,10 +283,10 @@ def test_fix_mode_e2e(tmp_path: Path):
     """Test --fix mode modifies vulnerable files."""
     # Create vulnerable file
     test_file = tmp_path / "test.py"
-    original_content = '''def get_user(user_id):
+    original_content = """def get_user(user_id):
     query = f"SELECT * FROM users WHERE id = {user_id}"
     return execute(query)
-'''
+"""
     test_file.write_text(original_content)
 
     # Run scan with --fix
@@ -316,16 +300,20 @@ def test_fix_mode_e2e(tmp_path: Path):
     # Note: This test depends on INJ001 having a fix_suggestion
     # If no fix was applied, the file will be unchanged
     # Check output for fix application message
-    assert "Modified" in result.stdout or fixed_content != original_content or "No fixes" in result.stdout
+    assert (
+        "Modified" in result.stdout
+        or fixed_content != original_content
+        or "No fixes" in result.stdout
+    )
 
 
 def test_fix_mode_preserves_clean_files(tmp_path: Path):
     """Test --fix mode doesn't modify clean files."""
     # Create clean file
     test_file = tmp_path / "clean.py"
-    original_content = '''def hello():
+    original_content = """def hello():
     return "world"
-'''
+"""
     test_file.write_text(original_content)
 
     # Run scan with --fix
@@ -337,7 +325,7 @@ def test_fix_mode_preserves_clean_files(tmp_path: Path):
 
 def test_fix_and_fix_interactive_mutually_exclusive(tmp_path: Path):
     """Test --fix and --fix-interactive cannot be used together."""
-    (tmp_path / "test.py").write_text('x = 1')
+    (tmp_path / "test.py").write_text("x = 1")
 
     result = runner.invoke(
         app,
@@ -473,9 +461,7 @@ def test_path_excludes_via_config(tmp_path: Path):
 def test_severity_override_via_config(tmp_path: Path):
     """Test severity override configuration."""
     # Create config with severity override
-    (tmp_path / ".hackmenot.yml").write_text(
-        "severity_override:\n  INJ001: low\n"
-    )
+    (tmp_path / ".hackmenot.yml").write_text("severity_override:\n  INJ001: low\n")
 
     # Create vulnerable file
     (tmp_path / "test.py").write_text('query = f"SELECT * FROM {x}"')
@@ -495,14 +481,14 @@ def test_multiple_findings_same_file(tmp_path: Path):
     """Test multiple findings in the same file are all reported."""
     # Create file with multiple issues
     (tmp_path / "test.py").write_text(
-        '''def get_user(user_id):
+        """def get_user(user_id):
     query = f"SELECT * FROM users WHERE id = {user_id}"
     return query
 
 def delete_user(user_id):
     query = f"DELETE FROM users WHERE id = {user_id}"
     return query
-'''
+"""
     )
 
     # Run scan with JSON output for easier parsing
@@ -576,7 +562,7 @@ def test_ts_file_scanning_e2e(tmp_path: Path):
 def test_jsx_file_scanning_e2e(tmp_path: Path):
     """Test JSX file scanning with React vulnerability."""
     (tmp_path / "component.jsx").write_text(
-        'function Component() { return <div dangerouslySetInnerHTML={{__html: userInput}} />; }'
+        "function Component() { return <div dangerouslySetInnerHTML={{__html: userInput}} />; }"
     )
     result = runner.invoke(app, ["scan", str(tmp_path)])
     # Should detect XSS vulnerability via dangerouslySetInnerHTML (XSS002 rule)
@@ -595,11 +581,11 @@ def test_mixed_python_js_project(tmp_path: Path):
 def test_js_eval_detection(tmp_path: Path):
     """Verify JSIJ001 (eval) is detected."""
     (tmp_path / "script.js").write_text(
-        '''
+        """
 function processInput(userInput) {
     return eval(userInput);
 }
-'''
+"""
     )
     result = runner.invoke(app, ["scan", str(tmp_path), "--format", "json"])
     data = json.loads(result.stdout)
@@ -610,11 +596,11 @@ function processInput(userInput) {
 def test_js_innerhtml_detection(tmp_path: Path):
     """Verify XSS001 (innerHTML) is detected."""
     (tmp_path / "script.js").write_text(
-        '''
+        """
 function render(userContent) {
     document.getElementById("output").innerHTML = userContent;
 }
-'''
+"""
     )
     result = runner.invoke(app, ["scan", str(tmp_path), "--format", "json"])
     data = json.loads(result.stdout)
@@ -625,11 +611,11 @@ function render(userContent) {
 def test_js_math_random_detection(tmp_path: Path):
     """Verify JSCR001 (Math.random) is detected."""
     (tmp_path / "crypto.js").write_text(
-        '''
+        """
 function generateToken() {
     return Math.random().toString(36);
 }
-'''
+"""
     )
     result = runner.invoke(app, ["scan", str(tmp_path), "--format", "json"])
     data = json.loads(result.stdout)
@@ -640,9 +626,9 @@ function generateToken() {
 def test_js_ignores_work(tmp_path: Path):
     """Verify inline ignores work for JS files."""
     (tmp_path / "script.js").write_text(
-        '''// hackmenot:ignore-next-line[JSIJ001] - intentional for testing
+        """// hackmenot:ignore-next-line[JSIJ001] - intentional for testing
 eval(testInput);
-'''
+"""
     )
     result = runner.invoke(app, ["scan", str(tmp_path)])
     # JSIJ001 should not appear because of inline ignore
@@ -652,9 +638,7 @@ eval(testInput);
 def test_js_config_excludes(tmp_path: Path):
     """Verify config path excludes work for JS files."""
     # Create config with path exclusions for node_modules
-    (tmp_path / ".hackmenot.yml").write_text(
-        "paths:\n  exclude:\n    - 'node_modules/*'\n"
-    )
+    (tmp_path / ".hackmenot.yml").write_text("paths:\n  exclude:\n    - 'node_modules/*'\n")
 
     # Create source file (should be scanned)
     src = tmp_path / "src"

@@ -1,9 +1,6 @@
 """Tests for Go auth/secrets rules."""
 
-from pathlib import Path
-
 import pytest
-
 from hackmenot.core.scanner import Scanner
 
 
@@ -17,14 +14,14 @@ class TestGoAuthRules:
     def test_hardcoded_password_detected(self, scanner, tmp_path):
         """Test GO_AUT001 detects hardcoded password."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 func connect() {
     password := "super_secret_123"
     db.Connect("admin", password)
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_AUT001"]
         assert len(findings) >= 1
@@ -32,14 +29,14 @@ func connect() {
     def test_hardcoded_secret_detected(self, scanner, tmp_path):
         """Test GO_AUT002 detects hardcoded secret/API key."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 func callAPI() {
     apiKey := "sk-1234567890abcdef"
     secretKey := "my_secret_key_value"
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_AUT002"]
         assert len(findings) >= 1
@@ -47,14 +44,14 @@ func callAPI() {
     def test_hardcoded_token_detected(self, scanner, tmp_path):
         """Test GO_AUT003 detects hardcoded token."""
         go_file = tmp_path / "main.go"
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 func authenticate() {
     token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
     accessToken := "ghp_xxxxxxxxxxxx"
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         findings = [f for f in result.findings if f.rule_id == "GO_AUT003"]
         assert len(findings) >= 1
@@ -63,14 +60,14 @@ func authenticate() {
         """Test GO_AUT004 detects empty password."""
         go_file = tmp_path / "main.go"
         # The pattern looks for 'password = ""' as a substring in assignment
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 func connect() {
     password = ""
     db.Connect("admin", password)
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         # GO_AUT004 looks for the literal pattern 'password = ""' in strings
         # Since we also match string literals, check for the empty string case
@@ -84,7 +81,7 @@ func connect() {
         """Test that secure Go auth code has no auth findings."""
         go_file = tmp_path / "main.go"
         # Avoid using patterns that contain auth-related keywords in strings
-        go_file.write_text('''
+        go_file.write_text("""
 package main
 
 import "os"
@@ -101,7 +98,7 @@ func callAPI() {
     k := os.Getenv("MYKEY")
     client.SetKey(k)
 }
-''')
+""")
         result = scanner.scan([tmp_path])
         auth_findings = [f for f in result.findings if f.rule_id.startswith("GO_AUT")]
         assert len(auth_findings) == 0

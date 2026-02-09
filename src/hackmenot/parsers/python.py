@@ -83,9 +83,7 @@ class _PythonASTVisitor(ast.NodeVisitor):
 
         self.generic_visit(node)
 
-    def _extract_function_info(
-        self, node: ast.FunctionDef | ast.AsyncFunctionDef
-    ) -> FunctionInfo:
+    def _extract_function_info(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> FunctionInfo:
         """Extract function information from AST node."""
         decorators = []
         for dec in node.decorator_list:

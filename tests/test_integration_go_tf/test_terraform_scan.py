@@ -2,11 +2,9 @@
 
 from pathlib import Path
 
-import pytest
-from typer.testing import CliRunner
-
 from hackmenot.cli.main import app
 from hackmenot.core.scanner import Scanner
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -17,7 +15,7 @@ class TestTerraformIntegration:
     def test_full_scan_terraform_project(self, tmp_path: Path):
         """Test full scan of Terraform project with multiple issues."""
         tf_file = tmp_path / "main.tf"
-        tf_file.write_text('''
+        tf_file.write_text("""
 resource "aws_s3_bucket" "public" {
   bucket = "my-bucket"
   acl    = "public-read"
@@ -36,7 +34,7 @@ resource "aws_security_group" "open" {
 variable "db_password" {
   default = "supersecret123"
 }
-''')
+""")
         scanner = Scanner()
         result = scanner.scan([tmp_path])
 
@@ -50,36 +48,37 @@ variable "db_password" {
     def test_terraform_cli_scan(self, tmp_path: Path):
         """Test CLI scan of Terraform files."""
         tf_file = tmp_path / "main.tf"
-        tf_file.write_text('''
+        tf_file.write_text("""
 resource "aws_s3_bucket" "test" {
   bucket = "test"
   acl    = "public-read-write"
 }
-''')
+""")
         result = runner.invoke(app, ["scan", str(tmp_path)])
         assert "TF_S3001" in result.stdout or "public" in result.stdout.lower()
 
     def test_terraform_json_output(self, tmp_path: Path):
         """Test JSON output for Terraform scan."""
         tf_file = tmp_path / "main.tf"
-        tf_file.write_text('''
+        tf_file.write_text("""
 resource "aws_ebs_volume" "data" {
   availability_zone = "us-east-1a"
   size = 100
 }
-''')
+""")
         result = runner.invoke(app, ["scan", str(tmp_path), "--format", "json"])
         import json
+
         data = json.loads(result.stdout)
         assert "findings" in data
 
     def test_tfvars_scanning(self, tmp_path: Path):
         """Test scanning of .tfvars files."""
         tfvars = tmp_path / "secrets.tfvars"
-        tfvars.write_text('''
+        tfvars.write_text("""
 db_password = "supersecret"
 api_key = "sk-12345"
-''')
+""")
         scanner = Scanner()
         result = scanner.scan([tmp_path])
         assert result.files_scanned == 1
@@ -87,7 +86,7 @@ api_key = "sk-12345"
     def test_clean_terraform_no_findings(self, tmp_path: Path):
         """Test that secure Terraform has no findings."""
         tf_file = tmp_path / "main.tf"
-        tf_file.write_text('''
+        tf_file.write_text("""
 resource "aws_s3_bucket" "secure" {
   bucket = "my-secure-bucket"
   acl    = "private"
@@ -108,7 +107,7 @@ resource "aws_s3_bucket" "secure" {
     target_bucket = "log-bucket"
   }
 }
-''')
+""")
         scanner = Scanner()
         result = scanner.scan([tmp_path])
         s3_findings = [f for f in result.findings if f.rule_id.startswith("TF_S3")]

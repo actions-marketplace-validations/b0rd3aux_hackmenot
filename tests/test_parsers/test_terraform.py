@@ -2,14 +2,8 @@
 
 from pathlib import Path
 
-import pytest
-
 from hackmenot.parsers.terraform import (
     TerraformParser,
-    TerraformParseResult,
-    TerraformResourceInfo,
-    TerraformVariableInfo,
-    TerraformLocalInfo,
 )
 
 
@@ -19,7 +13,7 @@ class TestTerraformParserS3Resources:
     def test_parse_s3_bucket_with_acl(self):
         """Test parsing S3 bucket resource with acl setting."""
         parser = TerraformParser()
-        source = '''
+        source = """
 resource "aws_s3_bucket" "example" {
   bucket = "my-tf-test-bucket"
   acl    = "private"
@@ -29,7 +23,7 @@ resource "aws_s3_bucket" "example" {
     Environment = "Dev"
   }
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert not result.has_error
@@ -43,12 +37,12 @@ resource "aws_s3_bucket" "example" {
     def test_parse_s3_bucket_public_read_acl(self):
         """Test parsing S3 bucket with public-read ACL (security concern)."""
         parser = TerraformParser()
-        source = '''
+        source = """
 resource "aws_s3_bucket" "public" {
   bucket = "my-public-bucket"
   acl    = "public-read"
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert len(result.resources) == 1
@@ -62,7 +56,7 @@ class TestTerraformParserSecurityGroups:
     def test_parse_security_group_with_ingress(self):
         """Test parsing security group with ingress block."""
         parser = TerraformParser()
-        source = '''
+        source = """
 resource "aws_security_group" "allow_ssh" {
   name        = "allow_ssh"
   description = "Allow SSH inbound traffic"
@@ -83,7 +77,7 @@ resource "aws_security_group" "allow_ssh" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert len(result.resources) == 1
@@ -96,7 +90,7 @@ resource "aws_security_group" "allow_ssh" {
     def test_parse_security_group_nested_blocks(self):
         """Test that nested ingress/egress blocks are properly parsed."""
         parser = TerraformParser()
-        source = '''
+        source = """
 resource "aws_security_group" "web" {
   name = "web-sg"
 
@@ -114,7 +108,7 @@ resource "aws_security_group" "web" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-'''
+"""
         result = parser.parse_string(source)
 
         resource = result.resources[0]
@@ -131,13 +125,13 @@ class TestTerraformParserVariables:
     def test_parse_variable_with_default(self):
         """Test parsing variable with default value."""
         parser = TerraformParser()
-        source = '''
+        source = """
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
   default     = "t2.micro"
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert len(result.variables) == 1
@@ -149,12 +143,12 @@ variable "instance_type" {
     def test_parse_variable_without_default(self):
         """Test parsing variable without default value."""
         parser = TerraformParser()
-        source = '''
+        source = """
 variable "api_key" {
   description = "API key for external service"
   type        = string
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert len(result.variables) == 1
@@ -165,13 +159,13 @@ variable "api_key" {
     def test_parse_sensitive_variable(self):
         """Test parsing sensitive variable."""
         parser = TerraformParser()
-        source = '''
+        source = """
 variable "db_password" {
   description = "Database password"
   type        = string
   sensitive   = true
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert len(result.variables) == 1
@@ -186,7 +180,7 @@ class TestTerraformParserLocals:
     def test_parse_locals_block(self):
         """Test parsing locals block."""
         parser = TerraformParser()
-        source = '''
+        source = """
 locals {
   common_tags = {
     Environment = "production"
@@ -194,7 +188,7 @@ locals {
   }
   bucket_name = "my-app-bucket"
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert len(result.locals) >= 2
@@ -209,7 +203,7 @@ class TestTerraformParserMultipleResources:
     def test_parse_multiple_resources(self):
         """Test parsing file with multiple resources."""
         parser = TerraformParser()
-        source = '''
+        source = """
 resource "aws_instance" "web" {
   ami           = "ami-0c55b159cbfafe1f0"
   instance_type = "t2.micro"
@@ -223,7 +217,7 @@ resource "aws_instance" "db" {
 resource "aws_s3_bucket" "logs" {
   bucket = "my-logs-bucket"
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert len(result.resources) == 3
@@ -239,12 +233,12 @@ class TestTerraformParserFileOperations:
         """Test parsing a Terraform file from disk."""
         parser = TerraformParser()
         tf_file = tmp_path / "main.tf"
-        tf_file.write_text('''
+        tf_file.write_text("""
 resource "aws_instance" "example" {
   ami           = "ami-12345678"
   instance_type = "t2.micro"
 }
-''')
+""")
         result = parser.parse_file(tf_file)
 
         assert not result.has_error
@@ -268,12 +262,12 @@ resource "aws_instance" "example" {
         """Test parsing invalid HCL doesn't crash."""
         parser = TerraformParser()
         tf_file = tmp_path / "invalid.tf"
-        tf_file.write_text('''
+        tf_file.write_text("""
 resource "aws_instance" "broken {
   # missing closing quote
   ami = "ami-12345678
 }
-''')
+""")
         result = parser.parse_file(tf_file)
 
         # Should not crash, returns error result
@@ -286,7 +280,7 @@ class TestTerraformParserEBSVolume:
     def test_parse_ebs_volume_unencrypted(self):
         """Test parsing EBS volume without encryption (security concern)."""
         parser = TerraformParser()
-        source = '''
+        source = """
 resource "aws_ebs_volume" "data" {
   availability_zone = "us-west-2a"
   size              = 100
@@ -296,7 +290,7 @@ resource "aws_ebs_volume" "data" {
     Name = "data-volume"
   }
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert len(result.resources) == 1
@@ -311,7 +305,7 @@ class TestTerraformParserIAMPolicy:
     def test_parse_iam_policy_resource(self):
         """Test parsing IAM policy resource."""
         parser = TerraformParser()
-        source = '''
+        source = """
 resource "aws_iam_policy" "admin" {
   name        = "admin-policy"
   description = "Admin access policy"
@@ -327,7 +321,7 @@ resource "aws_iam_policy" "admin" {
     ]
   })
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert len(result.resources) == 1
@@ -343,12 +337,12 @@ class TestTerraformParserTfvars:
         """Test parsing .tfvars file with variable values."""
         parser = TerraformParser()
         tfvars_file = tmp_path / "terraform.tfvars"
-        tfvars_file.write_text('''
+        tfvars_file.write_text("""
 region         = "us-west-2"
 instance_type  = "t2.micro"
 enable_logging = true
 allowed_ports  = [22, 80, 443]
-''')
+""")
         result = parser.parse_file(tfvars_file)
 
         assert not result.has_error
@@ -363,13 +357,13 @@ class TestTerraformParserLineNumbers:
     def test_resource_has_line_number(self):
         """Test that resources have line numbers."""
         parser = TerraformParser()
-        source = '''
+        source = """
 # Comment line
 resource "aws_instance" "web" {
   ami           = "ami-12345678"
   instance_type = "t2.micro"
 }
-'''
+"""
         result = parser.parse_string(source)
 
         assert len(result.resources) == 1
@@ -384,7 +378,7 @@ class TestTerraformParserDataSources:
     def test_parse_data_source(self):
         """Test that data sources are not confused with resources."""
         parser = TerraformParser()
-        source = '''
+        source = """
 data "aws_ami" "ubuntu" {
   most_recent = true
   owners      = ["099720109477"]
@@ -399,7 +393,7 @@ resource "aws_instance" "web" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
 }
-'''
+"""
         result = parser.parse_string(source)
 
         # Should only capture the resource, not the data source

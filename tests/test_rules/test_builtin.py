@@ -26,11 +26,11 @@ def test_inj001_detects_sql_fstring(tmp_path: Path):
 
     parser = PythonParser()
 
-    code = '''
+    code = """
 def get_user(user_id):
     query = f"SELECT * FROM users WHERE id = {user_id}"
     return db.execute(query)
-'''
+"""
     file = tmp_path / "test.py"
     file.write_text(code)
 
@@ -52,14 +52,14 @@ def test_auth001_detects_missing_auth(tmp_path: Path):
 
     parser = PythonParser()
 
-    code = '''
+    code = """
 from flask import Flask
 app = Flask(__name__)
 
 @app.route("/users")
 def get_users():
     return users
-'''
+"""
     file = tmp_path / "test.py"
     file.write_text(code)
 

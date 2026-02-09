@@ -1,11 +1,8 @@
 """Tests for OSV vulnerability checking."""
 
 import json
-from io import BytesIO
 from unittest.mock import MagicMock, patch
 from urllib.error import URLError
-
-import pytest
 
 from hackmenot.core.models import Severity
 from hackmenot.deps.parser import Dependency

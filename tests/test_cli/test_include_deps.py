@@ -1,8 +1,9 @@
 """Tests for --include-deps flag."""
 
 from pathlib import Path
-from typer.testing import CliRunner
+
 from hackmenot.cli.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -15,7 +16,11 @@ def test_include_deps_scans_dependencies(tmp_path: Path):
     result = runner.invoke(app, ["scan", str(tmp_path), "--include-deps"])
 
     # DEP001 is hallucinated package, DEP002 is typosquat
-    assert "DEP001" in result.stdout or "DEP002" in result.stdout or "hallucinated" in result.stdout.lower()
+    assert (
+        "DEP001" in result.stdout
+        or "DEP002" in result.stdout
+        or "hallucinated" in result.stdout.lower()
+    )
 
 
 def test_without_include_deps_skips_dependencies(tmp_path: Path):

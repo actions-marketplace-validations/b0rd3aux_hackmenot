@@ -88,9 +88,7 @@ class DependencyParser:
             deps_str = match.group(1)
             for pkg_match in re.finditer(r'"([^"]+)"', deps_str):
                 pkg_spec = pkg_match.group(1)
-                name_match = re.match(
-                    r"^([a-zA-Z0-9_.-]+)(?:\[.*?\])?(?:[=<>!~]+(.+))?$", pkg_spec
-                )
+                name_match = re.match(r"^([a-zA-Z0-9_.-]+)(?:\[.*?\])?(?:[=<>!~]+(.+))?$", pkg_spec)
                 if name_match:
                     deps.append(
                         Dependency(

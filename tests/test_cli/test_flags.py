@@ -2,9 +2,8 @@
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
 from hackmenot.cli.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -39,9 +38,7 @@ def test_full_and_config_together(tmp_path: Path):
     config_file = tmp_path / "custom.yml"
     config_file.write_text("fail_on: low")
     (tmp_path / "test.py").write_text("x = 1")
-    result = runner.invoke(
-        app, ["scan", str(tmp_path), "--full", "--config", str(config_file)]
-    )
+    result = runner.invoke(app, ["scan", str(tmp_path), "--full", "--config", str(config_file)])
     assert result.exit_code == 0
 
 

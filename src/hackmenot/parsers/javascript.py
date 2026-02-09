@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import tree_sitter_javascript as ts_javascript
-from tree_sitter import Language, Parser, Node
+from tree_sitter import Language, Node, Parser
 
 
 @dataclass
@@ -342,6 +342,6 @@ class _PatternExtractor:
         if node is None:
             return None
         try:
-            return self.source[node.start_byte:node.end_byte]
+            return self.source[node.start_byte : node.end_byte]
         except Exception:
             return None

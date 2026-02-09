@@ -19,9 +19,7 @@ class FixResult:
 class FixEngine:
     """Engine for applying fix suggestions to source code."""
 
-    def apply_fix(
-        self, source: str, finding: Finding, rule: Rule | None = None
-    ) -> FixResult:
+    def apply_fix(self, source: str, finding: Finding, rule: Rule | None = None) -> FixResult:
         """Apply a fix to source code.
 
         Tries pattern-based fix first, falls back to template replacement.
@@ -47,9 +45,7 @@ class FixEngine:
             parser = PatternParser()
             try:
                 parsed = parser.parse(rule.fix.pattern)
-                fixed_line = parser.apply_replacement(
-                    original_line, parsed, rule.fix.replacement
-                )
+                fixed_line = parser.apply_replacement(original_line, parsed, rule.fix.replacement)
                 if fixed_line is not None:
                     lines[line_idx] = fixed_line
                     return FixResult(
@@ -158,9 +154,7 @@ class FixEngine:
             Tuple of (modified source code, number of fixes applied).
         """
         # Sort findings by line number descending (bottom to top)
-        sorted_findings = sorted(
-            findings, key=lambda f: f.line_number, reverse=True
-        )
+        sorted_findings = sorted(findings, key=lambda f: f.line_number, reverse=True)
 
         applied_count = 0
         result = source

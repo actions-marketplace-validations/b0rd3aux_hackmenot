@@ -52,9 +52,7 @@ class SARIFReporter(BaseReporter):
                     "id": finding.rule_id,
                     "name": finding.rule_name,
                     "shortDescription": {"text": finding.rule_name},
-                    "defaultConfiguration": {
-                        "level": self.SEVERITY_MAP[finding.severity]
-                    },
+                    "defaultConfiguration": {"level": self.SEVERITY_MAP[finding.severity]},
                     "helpUri": f"https://hackmenot.dev/rules/{finding.rule_id}",
                 }
 

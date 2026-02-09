@@ -1,7 +1,6 @@
 """Tests for Terraform file scanning integration."""
 
-from pathlib import Path
-import pytest
+from hackmenot.core.constants import SUPPORTED_EXTENSIONS
 from hackmenot.core.scanner import Scanner
 
 
@@ -26,9 +25,8 @@ class TestTerraformScanning:
 
     def test_scanner_supported_extensions_includes_terraform(self):
         """Test that .tf and .tfvars are in supported extensions."""
-        scanner = Scanner()
-        assert ".tf" in scanner.SUPPORTED_EXTENSIONS
-        assert ".tfvars" in scanner.SUPPORTED_EXTENSIONS
+        assert ".tf" in SUPPORTED_EXTENSIONS
+        assert ".tfvars" in SUPPORTED_EXTENSIONS
 
     def test_scanner_detects_language_terraform(self, tmp_path):
         """Test language detection for Terraform files."""

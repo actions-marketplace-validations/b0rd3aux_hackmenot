@@ -1,8 +1,7 @@
 """Tests for pattern parser."""
 
 import pytest
-
-from hackmenot.fixes.patterns import PatternParser, PLACEHOLDERS
+from hackmenot.fixes.patterns import PatternParser
 
 
 class TestPatternParser:
@@ -55,21 +54,13 @@ class TestPatternParser:
     def test_apply_replacement_simple(self, parser):
         """Test basic replacement."""
         parsed = parser.parse("md5({arg})")
-        result = parser.apply_replacement(
-            "hash = md5(data)",
-            parsed,
-            "sha256({arg})"
-        )
+        result = parser.apply_replacement("hash = md5(data)", parsed, "sha256({arg})")
         assert result == "hash = sha256(data)"
 
     def test_apply_replacement_multiple_groups(self, parser):
         """Test replacement with multiple captured groups."""
         parsed = parser.parse("{func}({arg})")
-        result = parser.apply_replacement(
-            "x = foo(bar)",
-            parsed,
-            "{func}_safe({arg})"
-        )
+        result = parser.apply_replacement("x = foo(bar)", parsed, "{func}_safe({arg})")
         assert result == "x = foo_safe(bar)"
 
     def test_apply_replacement_no_match(self, parser):
@@ -80,11 +71,11 @@ class TestPatternParser:
 
     def test_complex_sql_pattern(self, parser):
         """Test complex SQL injection fix pattern."""
-        parsed = parser.parse('db.Query({string} + {var})')
+        parsed = parser.parse("db.Query({string} + {var})")
         result = parser.apply_replacement(
             'db.Query("SELECT * FROM users WHERE id = " + userId)',
             parsed,
-            'db.Query({string}, {var})'
+            "db.Query({string}, {var})",
         )
         assert "userId" in result
         assert "+ userId" not in result
@@ -92,9 +83,5 @@ class TestPatternParser:
     def test_terraform_pattern(self, parser):
         """Test Terraform ACL fix pattern."""
         parsed = parser.parse('acl = "public-read"')
-        result = parser.apply_replacement(
-            '  acl = "public-read"',
-            parsed,
-            'acl = "private"'
-        )
+        result = parser.apply_replacement('  acl = "public-read"', parsed, 'acl = "private"')
         assert result == '  acl = "private"'

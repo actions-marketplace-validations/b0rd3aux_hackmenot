@@ -81,12 +81,14 @@ class TerminalReporter(BaseReporter):
         header.append(str(finding.line_number), style="magenta")
 
         self.console.print()
-        self.console.print(Panel(
-            header,
-            box=box.ROUNDED,
-            border_style="dim",
-            padding=(0, 1),
-        ))
+        self.console.print(
+            Panel(
+                header,
+                box=box.ROUNDED,
+                border_style="dim",
+                padding=(0, 1),
+            )
+        )
 
         # Rule info
         rule_line = Text()
@@ -107,14 +109,14 @@ class TerminalReporter(BaseReporter):
             self.console.print()
             fix_text = Text()
             fix_text.append("    Fix: ", style="bold green")
-            fix_text.append(finding.fix_suggestion.split('\n')[0], style="green")
+            fix_text.append(finding.fix_suggestion.split("\n")[0], style="green")
             self.console.print(fix_text)
 
         # Education
         if finding.education:
             edu_text = Text()
             edu_text.append("    Why: ", style="bold blue")
-            edu_text.append(finding.education.split('\n')[0], style="dim italic")
+            edu_text.append(finding.education.split("\n")[0], style="dim italic")
             self.console.print(edu_text)
 
     def _render_no_findings(self) -> None:

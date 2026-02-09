@@ -18,9 +18,7 @@ class IgnoreHandler:
     # Pattern for same-line ignores: # hackmenot:ignore[RULE] - reason
     # Matches at end of line, requires non-empty reason after dash
     # Supports both # and // comment styles
-    SAME_LINE_PATTERN = re.compile(
-        r"(?:#|//)\s*hackmenot:ignore\[([A-Z]+\d+)\]\s*-\s*(.+)$"
-    )
+    SAME_LINE_PATTERN = re.compile(r"(?:#|//)\s*hackmenot:ignore\[([A-Z]+\d+)\]\s*-\s*(.+)$")
 
     # Pattern for next-line ignores: # hackmenot:ignore-next-line[RULE] - reason
     # Matches as a standalone comment line (possibly indented)
@@ -32,9 +30,7 @@ class IgnoreHandler:
     # Pattern for file-level ignores: # hackmenot:ignore-file - reason
     # Matches as a standalone comment line (possibly indented)
     # Supports both # and // comment styles
-    FILE_IGNORE_PATTERN = re.compile(
-        r"^\s*(?:#|//)\s*hackmenot:ignore-file\s*-\s*(.+)$"
-    )
+    FILE_IGNORE_PATTERN = re.compile(r"^\s*(?:#|//)\s*hackmenot:ignore-file\s*-\s*(.+)$")
 
     def __init__(self) -> None:
         """Initialize the IgnoreHandler."""
