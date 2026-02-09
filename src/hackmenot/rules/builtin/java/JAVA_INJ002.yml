@@ -1,0 +1,38 @@
+id: JAVA_INJ002
+name: Command Injection
+severity: high
+category: injection
+languages:
+  - java
+pattern:
+  type: method_invocation
+  names:
+    - "Runtime.exec"
+    - "ProcessBuilder"
+message: |
+  Potential command injection detected. Executing system commands with user-controlled
+  input can allow attackers to run arbitrary commands on the server.
+
+  This is especially dangerous when using shell interpretation.
+fix: |
+  1. Use ProcessBuilder without shell:
+  ProcessBuilder pb = new ProcessBuilder("ls", "-la", userPath);
+  pb.directory(new File("/safe/directory"));
+  Process p = pb.start();
+
+  2. Validate input strictly with allowlists.
+
+  3. Use Java libraries instead of external commands when possible.
+education: |
+  **Why AI makes this mistake:**
+  AI assistants use Runtime or ProcessBuilder because it seems convenient, without
+  recognizing command injection risks or considering Java alternatives.
+
+  **Impact:**
+  Command injection allows attackers to execute arbitrary system commands, read/write
+  files, establish reverse shells, install malware, or compromise the entire system.
+
+  **Best practice:**
+  Avoid external commands when possible. When necessary, use ProcessBuilder without
+  shell interpretation, validate inputs with strict allowlists, and never pass user
+  input to shell interpreters.

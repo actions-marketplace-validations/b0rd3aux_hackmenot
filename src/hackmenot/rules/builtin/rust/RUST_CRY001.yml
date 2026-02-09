@@ -1,0 +1,51 @@
+id: RUST_CRY001
+name: Weak Hash Functions
+severity: medium
+category: crypto
+languages:
+  - rust
+pattern:
+  type: import
+  names:
+    - "md5"
+    - "sha1"
+    - "md-5"
+message: |
+  Weak cryptographic hash function detected. MD5 and SHA-1 are cryptographically
+  broken and should not be used for security purposes.
+
+  Both algorithms have known collision attacks and are not suitable for:
+  - Password hashing
+  - Digital signatures
+  - Certificate verification
+  - Any security-critical hashing
+fix: |
+  Replace with stronger alternatives:
+
+  For password hashing:
+  - Use argon2, bcrypt, or scrypt from the 'argon2' or 'bcrypt' crates
+
+  For general cryptographic hashing:
+  - Use SHA-256 or SHA-3 from the 'sha2' or 'sha3' crates
+  - Example: use sha2::{Sha256, Digest}
+
+  For non-cryptographic purposes (checksums):
+  - MD5/SHA-1 may be acceptable if explicitly documented
+  - Consider BLAKE3 for fast, modern hashing
+education: |
+  **Why AI makes this mistake:**
+  AI assistants often suggest MD5 or SHA-1 because:
+  - They appear in older tutorials and documentation
+  - The AI doesn't distinguish between cryptographic and non-cryptographic use
+  - The simple API is attractive for quick implementations
+
+  **Impact:**
+  Using weak hashes for security can lead to:
+  - Password cracking through rainbow tables
+  - Digital signature forgery
+  - Man-in-the-middle attacks
+  - Data integrity violations
+
+  **Best practice:**
+  Use SHA-256 minimum for cryptographic hashing. For password hashing, always use
+  a dedicated password hashing function (Argon2, bcrypt, scrypt) with proper salting.

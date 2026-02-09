@@ -1,0 +1,73 @@
+id: RUST_SEC001
+name: Hardcoded Secrets
+severity: high
+category: secrets
+languages:
+  - rust
+pattern:
+  type: assignment
+  name_contains:
+    - "password"
+    - "passwd"
+    - "api_key"
+    - "apikey"
+    - "secret"
+    - "token"
+    - "private_key"
+    - "access_key"
+message: |
+  Potential hardcoded secret detected. Secrets should never be embedded in source code.
+
+  Hardcoded secrets can be easily extracted from binaries, version control history,
+  or leaked source code.
+fix: |
+  Use environment variables or secure configuration:
+
+  1. Environment variables:
+  ```rust
+  use std::env;
+
+  let api_key = env::var("API_KEY")
+      .expect("API_KEY must be set");
+  ```
+
+  2. Configuration file (not in version control):
+  ```rust
+  use config::Config;
+
+  let settings = Config::builder()
+      .add_source(config::File::with_name("config"))
+      .build()?;
+  let api_key = settings.get_string("api_key")?;
+  ```
+
+  3. Secret management service:
+  - AWS Secrets Manager
+  - HashiCorp Vault
+  - Azure Key Vault
+  - Google Cloud Secret Manager
+
+  4. Add secrets to .gitignore:
+  ```
+  config.toml
+  .env
+  secrets/
+  ```
+education: |
+  **Why AI makes this mistake:**
+  AI assistants hardcode secrets because:
+  - It's the simplest way to make example code work
+  - They're trained on code examples that contain placeholder secrets
+  - They don't distinguish between examples and production code
+
+  **Impact:**
+  Hardcoded secrets lead to:
+  - Credential theft from source code repositories
+  - Unauthorized access to systems and APIs
+  - Data breaches
+  - Difficult secret rotation (requires code changes and redeployment)
+
+  **Best practice:**
+  Never commit secrets to version control. Use environment variables, configuration
+  files (excluded from git), or dedicated secret management services. Rotate secrets
+  regularly and immediately if exposed.

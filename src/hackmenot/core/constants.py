@@ -10,9 +10,18 @@ PYTHON_EXTENSIONS = {".py"}
 JS_EXTENSIONS = {".js", ".ts", ".mjs", ".cjs", ".jsx", ".tsx"}
 GO_EXTENSIONS = {".go"}
 TERRAFORM_EXTENSIONS = {".tf", ".tfvars"}
+RUST_EXTENSIONS = {".rs"}
+JAVA_EXTENSIONS = {".java"}
 
 # Derived set of all supported extensions
-SUPPORTED_EXTENSIONS = PYTHON_EXTENSIONS | JS_EXTENSIONS | GO_EXTENSIONS | TERRAFORM_EXTENSIONS
+SUPPORTED_EXTENSIONS = (
+    PYTHON_EXTENSIONS
+    | JS_EXTENSIONS
+    | GO_EXTENSIONS
+    | TERRAFORM_EXTENSIONS
+    | RUST_EXTENSIONS
+    | JAVA_EXTENSIONS
+)
 
 # Directories to skip during scanning
 SKIP_DIRS = frozenset(

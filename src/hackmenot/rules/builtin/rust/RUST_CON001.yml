@@ -1,0 +1,53 @@
+id: RUST_CON001
+name: Unsafe Send/Sync Implementation
+severity: high
+category: concurrency
+languages:
+  - rust
+pattern:
+  type: unsafe_block
+message: |
+  Unsafe block detected. If this implements Send/Sync traits, ensure thread safety
+  invariants are maintained.
+
+  Incorrectly implementing Send or Sync can cause data races and undefined behavior
+  in concurrent code.
+fix: |
+  Review unsafe Send/Sync implementations:
+
+  1. For Send:
+  - Type must be safe to transfer between threads
+  - All contained types must be Send
+  - No thread-local resources or thread-dependent state
+
+  2. For Sync:
+  - Type must be safe to share references between threads
+  - Interior mutability must use thread-safe primitives (Mutex, RwLock, AtomicXxx)
+  - All contained types must be Sync
+
+  3. Documentation:
+  ```rust
+  // SAFETY: MyType is Send because:
+  // - field1 is Send (it's a Vec<T> where T: Send)
+  // - field2 uses Arc for thread-safe sharing
+  // - no thread-local state is maintained
+  unsafe impl<T: Send> Send for MyType<T> {}
+  ```
+education: |
+  **Why AI makes this mistake:**
+  AI assistants may incorrectly implement Send/Sync when:
+  - They don't understand Rust's concurrency safety guarantees
+  - They're trying to make code compile without understanding why it doesn't
+  - They copy patterns without verifying safety conditions
+
+  **Impact:**
+  Incorrect Send/Sync implementations can cause:
+  - Data races (multiple threads accessing mutable data)
+  - Undefined behavior
+  - Memory corruption
+  - Hard-to-reproduce bugs that only occur under specific timing conditions
+
+  **Best practice:**
+  Let the compiler automatically derive Send/Sync when possible. Only implement
+  manually for types with unsafe interior behavior, and carefully document all
+  safety invariants. Use thread-safe primitives (Arc, Mutex, RwLock, atomic types).

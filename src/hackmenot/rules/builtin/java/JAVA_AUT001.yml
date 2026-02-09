@@ -1,0 +1,47 @@
+id: JAVA_AUT001
+name: Missing Authentication
+severity: medium
+category: authentication
+languages:
+  - java
+pattern:
+  type: annotation
+  name: "RequestMapping"
+  missing: "PreAuthorize"
+message: |
+  Spring controller endpoint without authentication annotation detected. Public
+  endpoints without explicit authorization may expose sensitive functionality.
+
+  Ensure all endpoints have appropriate security annotations.
+fix: |
+  Add Spring Security annotations:
+
+  1. Require authentication:
+  @PreAuthorize("isAuthenticated()")
+  @GetMapping("/data")
+  public ResponseEntity<?> getData() { }
+
+  2. Role-based access:
+  @PreAuthorize("hasRole('ADMIN')")
+  @DeleteMapping("/users/{id}")
+  public ResponseEntity<?> deleteUser(@PathVariable Long id) { }
+
+  3. Expression-based authorization:
+  @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
+  @GetMapping("/users/{userId}/profile")
+  public ResponseEntity<?> getProfile(@PathVariable Long userId) { }
+
+  4. Configure global security to deny by default and explicitly permit public endpoints.
+education: |
+  **Why AI makes this mistake:**
+  AI assistants create unprotected endpoints because they focus on functionality,
+  not security, and security annotations are often added as an afterthought.
+
+  **Impact:**
+  Missing authentication can lead to unauthorized access to sensitive data,
+  unauthorized operations, privilege escalation, and information disclosure.
+
+  **Best practice:**
+  Apply "secure by default" principle - require explicit authentication on all
+  endpoints except those specifically marked public. Use @PreAuthorize at method
+  level for fine-grained control.

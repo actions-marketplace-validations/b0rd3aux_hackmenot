@@ -12,8 +12,8 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org/downloads/)
 
-![100+ Security Rules](https://img.shields.io/badge/rules-100+-green)
-![4 Languages](https://img.shields.io/badge/languages-Python%20%7C%20JS%20%7C%20Go%20%7C%20Terraform-orange)
+![100+ Security Rules](https://img.shields.io/badge/rules-120+-green)
+![6 Languages](https://img.shields.io/badge/languages-Python%20%7C%20JS%20%7C%20Go%20%7C%20Rust%20%7C%20Java%20%7C%20Terraform-orange)
 ![Sub-second Scans](https://img.shields.io/badge/scans-sub--second-purple)
 
 <img src="assets/hero-scan.gif" alt="hackmenot in action" width="700">
@@ -59,7 +59,7 @@ That's it. No config files, no setup, no API keys.
 
 ### Scan & Detect
 
-100+ security rules purpose-built for AI-generated code patterns across Python, JavaScript/TypeScript, Go, and Terraform.
+120+ security rules purpose-built for AI-generated code patterns across Python, JavaScript/TypeScript, Go, Rust, Java, and Terraform.
 
 <img src="assets/hero-scan.gif" alt="hackmenot scanning code" width="700">
 
@@ -100,8 +100,10 @@ Native GitHub Action with SARIF support. Findings appear directly in GitHub's Se
 | Category | Examples | Languages |
 |----------|----------|-----------|
 | **Injection** | SQL injection, command injection, XSS, path traversal | All |
-| **Authentication** | Missing auth decorators, weak sessions, hardcoded credentials | Python, JS |
+| **Authentication** | Missing auth decorators, weak sessions, hardcoded credentials | Python, JS, Java |
 | **Cryptography** | Weak algorithms, hardcoded keys, insecure random | All |
+| **Unsafe Operations** | Unsafe blocks, raw pointers, transmute, reflection | Rust, Java |
+| **Deserialization** | Insecure object deserialization, XXE attacks | Java, Rust |
 | **Data Exposure** | Logging secrets, verbose errors, debug mode in prod | All |
 | **Infrastructure** | Open security groups, missing encryption, public S3 buckets | Terraform |
 | **Dependencies** | Hallucinated packages, typosquats, CVEs via [OSV](https://osv.dev) | Python, JS |

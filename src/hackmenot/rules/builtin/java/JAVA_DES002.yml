@@ -1,0 +1,54 @@
+id: JAVA_DES002
+name: Missing serialVersionUID
+severity: medium
+category: deserialization
+languages:
+  - java
+pattern:
+  type: class
+  implements: "Serializable"
+  missing_field: "serialVersionUID"
+message: |
+  Serializable class missing serialVersionUID. This can cause deserialization
+  failures when the class definition changes.
+
+  Without an explicit serialVersionUID, the JVM generates one based on class
+  details, which changes with any modification.
+fix: |
+  Add an explicit serialVersionUID to all Serializable classes:
+
+  ```java
+  public class MyClass implements Serializable {
+      private static final long serialVersionUID = 1L;
+
+      // class fields and methods...
+  }
+  ```
+
+  To generate a UID based on the current class:
+  ```bash
+  serialver -classpath . com.example.MyClass
+  ```
+
+  Best practice:
+  - Start with 1L for new classes
+  - Only increment when making incompatible changes
+  - Document version changes in comments
+education: |
+  **Why AI makes this mistake:**
+  AI assistants often forget serialVersionUID because:
+  - It's not required for code to compile
+  - Simple examples omit it
+  - The consequences aren't immediately obvious
+
+  **Impact:**
+  Missing serialVersionUID causes:
+  - InvalidClassException when deserializing after code changes
+  - Hard-to-debug runtime errors in production
+  - Version compatibility issues across deployments
+  - May force regeneration of cached/persisted data
+
+  **Best practice:**
+  Always add explicit serialVersionUID to Serializable classes. Treat it as
+  mandatory. Increment when making breaking serialization changes. Better yet,
+  avoid Java serialization for new code - use JSON or Protocol Buffers instead.

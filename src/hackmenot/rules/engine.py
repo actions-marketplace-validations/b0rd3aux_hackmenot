@@ -6,7 +6,9 @@ from typing import Any
 from hackmenot.core.models import Finding, Rule
 from hackmenot.parsers.base import ParseResult
 from hackmenot.parsers.golang import GoParseResult
+from hackmenot.parsers.java import JavaParseResult
 from hackmenot.parsers.javascript import JSParseResult
+from hackmenot.parsers.rust import RustParseResult
 from hackmenot.parsers.terraform import TerraformParseResult
 
 
@@ -52,6 +54,10 @@ class RulesEngine:
                 rule_findings = self._check_go_rule(rule, parse_result, str(file_path))
             elif language == "terraform" and isinstance(parse_result, TerraformParseResult):
                 rule_findings = self._check_terraform_rule(rule, parse_result, str(file_path))
+            elif language == "rust" and isinstance(parse_result, RustParseResult):
+                rule_findings = self._check_rust_rule(rule, parse_result, str(file_path))
+            elif language == "java" and isinstance(parse_result, JavaParseResult):
+                rule_findings = self._check_java_rule(rule, parse_result, str(file_path))
             else:
                 rule_findings = self._check_rule(rule, parse_result, file_path)
             findings.extend(rule_findings)
@@ -79,6 +85,8 @@ class RulesEngine:
             ".go": "go",
             ".tf": "terraform",
             ".tfvars": "terraform",
+            ".rs": "rust",
+            ".java": "java",
         }
         return ext_map.get(file_path.suffix.lower(), "unknown")
 
@@ -400,6 +408,218 @@ class RulesEngine:
                             line=1,
                             column=0,
                             code_snippet=f'import "{imp}"',
+                        )
+                    )
+
+        return findings
+
+    def _check_rust_rule(
+        self,
+        rule: Rule,
+        parse_result: Any,
+        file_path: str,
+    ) -> list[Finding]:
+        """Check a Rust rule against parse result."""
+        findings = []
+        pattern = rule.pattern
+        pattern_type = pattern.get("type", "")
+
+        if pattern_type == "call":
+            names = [n.upper() for n in pattern.get("names", [])]
+            for call in parse_result.get_calls():
+                if any(name in call.name.upper() for name in names):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=call.line,
+                            column=call.column,
+                            code_snippet=call.name,
+                        )
+                    )
+
+        elif pattern_type == "macro":
+            names = [n.upper() for n in pattern.get("names", [])]
+            contains = [c.upper() for c in pattern.get("contains", [])]
+            for macro in parse_result.get_macros():
+                # Check macro name
+                name_match = any(name in macro.name.upper() for name in names) if names else False
+                # Check macro content for keywords
+                content = " ".join(macro.args)
+                contains_match = any(c in content.upper() for c in contains) if contains else False
+
+                if name_match and (not contains or contains_match):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=macro.line,
+                            column=macro.column,
+                            code_snippet=f"{macro.name}(...)",
+                        )
+                    )
+
+        elif pattern_type == "unsafe_block":
+            for unsafe in parse_result.get_unsafe_blocks():
+                findings.append(
+                    self._create_finding(
+                        rule=rule,
+                        file_path=file_path,
+                        line=unsafe.line_start,
+                        column=unsafe.column,
+                        code_snippet=f"unsafe {unsafe.block_type}",
+                    )
+                )
+
+        elif pattern_type == "import":
+            names = [n.lower() for n in pattern.get("names", [])]
+            for imp in parse_result.get_imports():
+                if any(name in imp.lower() for name in names):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=1,
+                            column=0,
+                            code_snippet=f"use {imp}",
+                        )
+                    )
+
+        elif pattern_type == "string":
+            contains = [c.upper() for c in pattern.get("contains", [])]
+            for string in parse_result.get_strings():
+                if any(c in string.value.upper() for c in contains):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=string.line,
+                            column=string.column,
+                            code_snippet=string.value[:50],
+                        )
+                    )
+
+        elif pattern_type == "assignment":
+            name_contains = [n.upper() for n in pattern.get("name_contains", [])]
+            for assign in parse_result.get_assignments():
+                if any(nc in assign.target.upper() for nc in name_contains):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=assign.line,
+                            column=assign.column,
+                            code_snippet=f"let {assign.target} = ...",
+                        )
+                    )
+
+        return findings
+
+    def _check_java_rule(
+        self,
+        rule: Rule,
+        parse_result: Any,
+        file_path: str,
+    ) -> list[Finding]:
+        """Check a Java rule against parse result."""
+        findings = []
+        pattern = rule.pattern
+        pattern_type = pattern.get("type", "")
+
+        if pattern_type == "method_invocation":
+            names = [n.upper() for n in pattern.get("names", [])]
+            for invocation in parse_result.get_method_invocations():
+                full_name = (
+                    f"{invocation.receiver}.{invocation.method_name}"
+                    if invocation.receiver
+                    else invocation.method_name
+                )
+                if any(name in full_name.upper() for name in names):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=invocation.line,
+                            column=invocation.column,
+                            code_snippet=f"{full_name}(...)",
+                        )
+                    )
+
+        elif pattern_type == "object_creation":
+            class_names = [c.upper() for c in pattern.get("class", [])]
+            for creation in parse_result.get_object_creations():
+                if any(cn in creation.class_name.upper() for cn in class_names):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=creation.line,
+                            column=creation.column,
+                            code_snippet=f"new {creation.class_name}(...)",
+                        )
+                    )
+
+        elif pattern_type == "string_concat":
+            contains = [c.upper() for c in pattern.get("contains", [])]
+            for concat in parse_result.get_string_concats():
+                if concat.in_sql_context and any(
+                    c in " + ".join(concat.parts).upper() for c in contains
+                ):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=concat.line,
+                            column=concat.column,
+                            code_snippet=" + ".join(p[:20] for p in concat.parts[:2]),
+                        )
+                    )
+
+        elif pattern_type == "annotation":
+            name = pattern.get("name", "").upper()
+            missing = pattern.get("missing", "").upper()
+            for annotation in parse_result.get_annotations():
+                if name and name in annotation.name.upper():
+                    # Check if missing a required annotation
+                    if missing:
+                        # This would need more context - simplified for now
+                        pass
+                    else:
+                        findings.append(
+                            self._create_finding(
+                                rule=rule,
+                                file_path=file_path,
+                                line=annotation.line,
+                                column=annotation.column,
+                                code_snippet=f"@{annotation.name}",
+                            )
+                        )
+
+        elif pattern_type == "import":
+            names = [n.lower() for n in pattern.get("names", [])]
+            for imp in parse_result.get_imports():
+                if any(name in imp.lower() for name in names):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=1,
+                            column=0,
+                            code_snippet=f"import {imp}",
+                        )
+                    )
+
+        elif pattern_type == "assignment":
+            name_contains = [n.upper() for n in pattern.get("name_contains", [])]
+            for assign in parse_result.get_assignments():
+                if any(nc in assign.target.upper() for nc in name_contains):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=assign.line,
+                            column=assign.column,
+                            code_snippet=f"{assign.target} = ...",
                         )
                     )
 

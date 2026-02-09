@@ -1,5 +1,6 @@
 """Parsers module for hackmenot."""
 
+from hackmenot.parsers.java import JavaParser, JavaParseResult
 from hackmenot.parsers.javascript import (
     AssignmentInfo,
     CallInfo,
@@ -9,6 +10,7 @@ from hackmenot.parsers.javascript import (
     TemplateLiteralInfo,
 )
 from hackmenot.parsers.python import PythonParser
+from hackmenot.parsers.rust import RustParser, RustParseResult
 from hackmenot.parsers.terraform import (
     TerraformLocalInfo,
     TerraformParser,
@@ -22,8 +24,12 @@ __all__ = [
     "CallInfo",
     "JSParseResult",
     "JSXElementInfo",
+    "JavaParser",
+    "JavaParseResult",
     "JavaScriptParser",
     "PythonParser",
+    "RustParser",
+    "RustParseResult",
     "TemplateLiteralInfo",
     "TerraformLocalInfo",
     "TerraformParseResult",

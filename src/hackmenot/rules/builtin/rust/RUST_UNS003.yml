@@ -1,0 +1,51 @@
+id: RUST_UNS003
+name: Transmute Usage
+severity: critical
+category: unsafe
+languages:
+  - rust
+pattern:
+  type: call
+  names:
+    - "std::mem::transmute"
+    - "mem::transmute"
+    - "std::mem::transmute_copy"
+    - "mem::transmute_copy"
+message: |
+  Transmute operation detected. This is one of the most dangerous operations in Rust,
+  reinterpreting bits of one type as another type without any safety checks.
+
+  Transmute can cause undefined behavior if types have different sizes, alignments,
+  or validity requirements.
+fix: |
+  Before using transmute:
+  1. Verify source and destination types have identical size and alignment
+  2. Ensure bit patterns valid for source are valid for destination
+  3. Document the exact safety invariants being maintained
+  4. Consider if there's a safer alternative
+
+  Safer alternatives:
+  - Use From/Into/TryFrom/TryInto traits
+  - Use .cast() for pointer casts
+  - Use union types for type punning
+  - Use bytemuck crate for verified transmutes
+education: |
+  **Why AI makes this mistake:**
+  AI assistants suggest transmute when:
+  - Converting between pointer types
+  - Working with raw bytes or serialization
+  - Trying to bypass type system restrictions
+
+  They rarely verify that the transmute is actually safe or consider alternatives.
+
+  **Impact:**
+  Incorrect transmute can cause:
+  - Undefined behavior (compiler is free to do anything)
+  - Memory corruption
+  - Security vulnerabilities
+  - Silent data corruption
+
+  **Best practice:**
+  Almost never use transmute directly. If you must, use bytemuck crate which provides
+  verified safe transmutes, or carefully document all safety invariants. Consider if
+  union types or safe conversions can work instead.

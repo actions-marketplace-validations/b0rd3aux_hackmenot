@@ -10,7 +10,9 @@ from hackmenot.core.config import Config
 from hackmenot.core.constants import (
     DEFAULT_WORKERS,
     GO_EXTENSIONS,
+    JAVA_EXTENSIONS,
     JS_EXTENSIONS,
+    RUST_EXTENSIONS,
     SKIP_DIRS,
     SUPPORTED_EXTENSIONS,
     TERRAFORM_EXTENSIONS,
@@ -18,8 +20,10 @@ from hackmenot.core.constants import (
 from hackmenot.core.ignores import IgnoreHandler
 from hackmenot.core.models import Finding, ScanResult, Severity
 from hackmenot.parsers.golang import GoParser
+from hackmenot.parsers.java import JavaParser
 from hackmenot.parsers.javascript import JavaScriptParser
 from hackmenot.parsers.python import PythonParser
+from hackmenot.parsers.rust import RustParser
 from hackmenot.parsers.terraform import TerraformParser
 from hackmenot.rules.engine import RulesEngine
 from hackmenot.rules.registry import RuleRegistry
@@ -33,6 +37,8 @@ class Scanner:
         self.js_parser = JavaScriptParser()
         self.go_parser = GoParser()
         self.tf_parser = TerraformParser()
+        self.rust_parser = RustParser()
+        self.java_parser = JavaParser()
         self.engine = RulesEngine()
         self.cache = cache
         self.config = config or Config()
@@ -228,6 +234,10 @@ class Scanner:
             return "go"
         if file_path.suffix in TERRAFORM_EXTENSIONS:
             return "terraform"
+        if file_path.suffix in RUST_EXTENSIONS:
+            return "rust"
+        if file_path.suffix in JAVA_EXTENSIONS:
+            return "java"
         return "python"
 
     def _scan_file(self, file_path: Path) -> list[Finding]:
@@ -261,6 +271,18 @@ class Scanner:
         elif language == "terraform":
             # Parse Terraform file
             parse_result = self.tf_parser.parse_file(file_path)
+            if parse_result.has_error:
+                return []
+            return self.engine.check(parse_result, file_path, ignores=ignores)
+        elif language == "rust":
+            # Parse Rust file
+            parse_result = self.rust_parser.parse_file(file_path)
+            if parse_result.has_error:
+                return []
+            return self.engine.check(parse_result, file_path, ignores=ignores)
+        elif language == "java":
+            # Parse Java file
+            parse_result = self.java_parser.parse_file(file_path)
             if parse_result.has_error:
                 return []
             return self.engine.check(parse_result, file_path, ignores=ignores)
