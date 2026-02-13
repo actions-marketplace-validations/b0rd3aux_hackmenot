@@ -468,3 +468,142 @@ def deps(
 
     if result.findings_at_or_above(fail_severity):
         raise typer.Exit(1)
+
+
+@app.command()
+def surface(
+    paths: list[Path] = typer.Argument(
+        ...,
+        help="Files or directories to analyze",
+    ),
+    public_only: bool = typer.Option(
+        False,
+        "--public-only",
+        help="Show only public (unauthenticated) entry points",
+    ),
+    format: OutputFormat = typer.Option(
+        OutputFormat.terminal,
+        "--format",
+        "-f",
+        help="Output format: terminal, json",
+    ),
+) -> None:
+    """Map the attack surface by detecting all entry points.
+
+    Entry points are locations where untrusted data enters your application:
+    - API endpoints (Flask, FastAPI routes)
+    - CLI commands (Typer, Click)
+    - User input (input(), stdin)
+
+    Example:
+        hackmenot surface . --public-only
+    """
+    from hackmenot.graph.surface import SurfaceMapper
+
+    # Validate paths exist
+    for path in paths:
+        if not path.exists():
+            console.print(f"Error: Path does not exist: {path}")
+            raise typer.Exit(1)
+
+    # Map the attack surface
+    mapper = SurfaceMapper()
+    attack_surface = mapper.map_surface(paths)
+
+    # Filter if needed
+    entry_points = attack_surface.entry_points
+    if public_only:
+        entry_points = [ep for ep in entry_points if not ep.auth_required]
+
+    if format == OutputFormat.json:
+        # JSON output
+        output = {
+            "total_entry_points": attack_surface.total_count,
+            "public_entry_points": attack_surface.public_count,
+            "authenticated_entry_points": attack_surface.authenticated_count,
+            "entry_points": [
+                {
+                    "name": ep.name,
+                    "type": ep.type.value,
+                    "file": str(ep.file),
+                    "line": ep.line,
+                    "http_method": ep.http_method,
+                    "route": ep.route,
+                    "auth_required": ep.auth_required,
+                    "framework": ep.framework,
+                }
+                for ep in entry_points
+            ],
+        }
+        console.print_json(json.dumps(output, indent=2))
+    else:
+        # Terminal output
+        from rich.table import Table
+
+        # Summary
+        console.print()
+        console.print("[bold]Attack Surface Summary[/bold]")
+        console.print(f"  Total entry points: {attack_surface.total_count}")
+        console.print(
+            f"  Public (no auth): {attack_surface.public_count} "
+            + ("[yellow]⚠️[/yellow]" if attack_surface.public_count > 0 else "")
+        )
+        console.print(f"  Authenticated: {attack_surface.authenticated_count}")
+        console.print()
+
+        if not entry_points:
+            console.print("[dim]No entry points found[/dim]")
+            return
+
+        # Group by type
+        from hackmenot.graph.surface import EntryPointType
+
+        by_type: dict[EntryPointType, list] = {}
+        for ep in entry_points:
+            if ep.type not in by_type:
+                by_type[ep.type] = []
+            by_type[ep.type].append(ep)
+
+        # Print each type
+        for ep_type, eps in by_type.items():
+            title = f"{ep_type.value.replace('_', ' ').title()} ({len(eps)})"
+            if public_only:
+                title += " - Public Only"
+
+            table = Table(title=title, show_header=True)
+            table.add_column("Name", style="cyan")
+            table.add_column("Location", style="dim")
+
+            if ep_type == EntryPointType.API_ENDPOINT:
+                table.add_column("Method", style="green")
+                table.add_column("Route", style="yellow")
+                table.add_column("Auth", style="red")
+                table.add_column("Framework", style="dim")
+
+                for ep in eps:
+                    table.add_row(
+                        ep.name,
+                        f"{ep.file.name}:{ep.line}",
+                        ep.http_method or "?",
+                        ep.route or "?",
+                        "✓" if ep.auth_required else "[red]✗[/red]",
+                        ep.framework or "?",
+                    )
+            elif ep_type == EntryPointType.CLI_COMMAND:
+                table.add_column("Framework", style="dim")
+
+                for ep in eps:
+                    table.add_row(
+                        ep.name,
+                        f"{ep.file.name}:{ep.line}",
+                        ep.framework or "?",
+                    )
+            else:
+                for ep in eps:
+                    table.add_row(
+                        ep.name,
+                        f"{ep.file.name}:{ep.line}",
+                    )
+
+            console.print(table)
+            console.print()
