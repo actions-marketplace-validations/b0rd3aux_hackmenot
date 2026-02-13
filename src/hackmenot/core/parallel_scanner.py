@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from tqdm import tqdm
+
 from hackmenot.core.config import Config
 from hackmenot.core.constants import (
     DEFAULT_WORKERS,
@@ -393,13 +395,20 @@ class ParallelScanner:
             List of (file_path, findings) tuples collected from workers.
         """
         results = []
-        for _ in range(expected_count):
-            try:
-                file_path, findings = self.results_queue.get(timeout=30.0)
-                results.append((file_path, findings))
-            except queue.Empty:
-                # Worker might have crashed or timeout reached
-                break
+        with tqdm(
+            total=expected_count,
+            desc="Scanning files",
+            unit="file",
+            bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]",
+        ) as pbar:
+            for _ in range(expected_count):
+                try:
+                    file_path, findings = self.results_queue.get(timeout=30.0)
+                    results.append((file_path, findings))
+                    pbar.update(1)
+                except queue.Empty:
+                    # Worker might have crashed or timeout reached
+                    break
         return results
 
     def scan(self, paths: list[Path]) -> ScanResults:
