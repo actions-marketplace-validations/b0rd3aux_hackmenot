@@ -250,7 +250,7 @@ def scan(
         # Run scan with parallel or sequential scanner
         if parallel:
             # Use parallel scanner (v2.0)
-            parallel_scanner = ParallelScanner(num_workers=workers)
+            parallel_scanner = ParallelScanner(num_workers=workers, config=config)
             parallel_results = parallel_scanner.scan(scan_paths)
 
             # Convert ParallelScanner results to Scanner format

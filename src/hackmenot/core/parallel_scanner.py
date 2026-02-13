@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import multiprocessing
 import queue
 from collections.abc import Iterator
@@ -9,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from hackmenot.core.config import Config
 from hackmenot.core.constants import (
     DEFAULT_WORKERS,
     GO_EXTENSIONS,
@@ -23,6 +25,7 @@ from hackmenot.core.constants import (
     WORKER_QUEUE_TIMEOUT,
     WORKER_SHUTDOWN_TIMEOUT,
 )
+from hackmenot.core.ignores import IgnoreHandler
 from hackmenot.parsers.golang import GoParser
 from hackmenot.parsers.java import JavaParser
 from hackmenot.parsers.javascript import JavaScriptParser
@@ -140,8 +143,8 @@ class ScanWorker:
         """Scan a single file for security issues.
 
         Parses the file using the appropriate parser and checks it against
-        all registered rules. Handles errors gracefully without crashing
-        the worker process.
+        all registered rules. Respects inline ignore comments.
+        Handles errors gracefully without crashing the worker process.
 
         Args:
             file_path: Path to the file to scan.
@@ -153,8 +156,20 @@ class ScanWorker:
             - Parser not available for file type
             - Rule checking fails
             - No issues found
+            - File is ignored via inline comment
         """
         try:
+            # Read source content for ignore parsing
+            source = file_path.read_text()
+
+            # Parse inline ignore comments
+            ignore_handler = IgnoreHandler()
+            ignores = ignore_handler.parse(source)
+
+            # Check for file-level ignore
+            if ignore_handler.is_file_ignored():
+                return []
+
             # Get parser for this file type
             parser = self._get_parser(file_path)
             if parser is None:
@@ -169,8 +184,8 @@ class ScanWorker:
                 # Parse error - skip this file
                 return []
 
-            # Check rules against parsed AST
-            findings: list[Any] = self.rules_engine.check(parse_result, file_path)
+            # Check rules against parsed AST with inline ignores
+            findings: list[Any] = self.rules_engine.check(parse_result, file_path, ignores=ignores)
             return findings
 
         except UnicodeDecodeError:
@@ -188,7 +203,10 @@ class ParallelScanner:
     """Parallel scanner for processing files concurrently."""
 
     def __init__(
-        self, num_workers: int | None = None, rules_engine: RulesEngine | None = None
+        self,
+        num_workers: int | None = None,
+        rules_engine: RulesEngine | None = None,
+        config: Config | None = None,
     ) -> None:
         """Initialize the ParallelScanner.
 
@@ -197,16 +215,27 @@ class ParallelScanner:
                         Defaults to DEFAULT_WORKERS if None.
             rules_engine: RulesEngine instance with registered rules.
                          If None, automatically loads all rules from RuleRegistry.
+            config: Configuration object with disabled rules and other settings.
+                   If None, loads default config. Only used when rules_engine is None.
         """
         self.num_workers = num_workers if num_workers is not None else DEFAULT_WORKERS
+
+        # Store config (needed for path exclusions)
+        self.config = config if config is not None else Config()
 
         # Load rules if not provided
         if rules_engine is None:
             rule_registry = RuleRegistry()
             rule_registry.load_all()
             self.rules_engine = RulesEngine()
+
+            # Get disabled rules from config
+            disabled = set(self.config.rules_disable)
+
+            # Register only non-disabled rules
             for rule in rule_registry.get_all_rules():
-                self.rules_engine.register_rule(rule)
+                if rule.id not in disabled:
+                    self.rules_engine.register_rule(rule)
         else:
             self.rules_engine = rules_engine
 
@@ -215,6 +244,33 @@ class ParallelScanner:
         )
         self.results_queue: multiprocessing.Queue[tuple[Path, list[Any]]] = multiprocessing.Queue()
         self._workers: list[multiprocessing.Process] = []
+
+    def _is_excluded(self, file_path: Path, scan_roots: list[Path]) -> bool:
+        """Check if a file path matches any exclusion pattern.
+
+        Args:
+            file_path: The file path to check.
+            scan_roots: The root paths being scanned.
+
+        Returns:
+            True if the file should be excluded, False otherwise.
+        """
+        if not self.config.paths_exclude:
+            return False
+
+        # Try to get relative path from any scan root
+        for root in scan_roots:
+            try:
+                relative = file_path.relative_to(root)
+                relative_str = str(relative)
+                for pattern in self.config.paths_exclude:
+                    if fnmatch.fnmatch(relative_str, pattern):
+                        return True
+            except ValueError:
+                # file_path is not relative to this root
+                continue
+
+        return False
 
     def _discover_files(self, paths: list[Path]) -> Iterator[Path]:
         """Discover files to scan from input paths.
@@ -233,7 +289,9 @@ class ParallelScanner:
             # If path is a file, check if it has a supported extension
             if path.is_file():
                 if path.suffix in SUPPORTED_EXTENSIONS:
-                    yield path
+                    # Check if file is excluded by config
+                    if not self._is_excluded(path, paths):
+                        yield path
                 continue
 
             # If path is a directory, recursively discover files
@@ -261,6 +319,10 @@ class ParallelScanner:
                         if not resolved.is_relative_to(base_path):
                             continue
                     except (OSError, ValueError):
+                        continue
+
+                    # Skip if file matches exclusion patterns from config
+                    if self._is_excluded(file_path, paths):
                         continue
 
                     yield file_path
