@@ -29,11 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Symlink escape protection now checks all files, not just symlinks
 - .egg-info directories properly filtered during file discovery
 - Consistent exception handling across all parsers
-
-### Known Issues
-- `.hackmeignore` integration with parallel scanner (7 failing tests)
-  - Workaround: Use `--no-parallel` for full .hackmeignore support
-  - Will be fixed in v2.0.1
+- ParallelScanner now respects all config settings (disabled rules, path exclusions)
+- Inline ignore comments work correctly with parallel scanning
+- Config-based path exclusion patterns honored in parallel mode
 
 ## [1.1.0] - 2026-02-10
 
