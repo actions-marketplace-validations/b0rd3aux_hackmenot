@@ -10,4 +10,7 @@ __all__ = [
     "DataFlowTracker",
     "TaintSink",
     "TaintSource",
+    "SecurityGraphBuilder",
+    "GraphNode",
+    "GraphEdge",
 ]

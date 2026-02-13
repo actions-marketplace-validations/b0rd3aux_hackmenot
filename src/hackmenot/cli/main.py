@@ -712,3 +712,75 @@ def flows(
 
         console.print(table)
         console.print()
+
+
+@app.command()
+def graph(
+    paths: list[Path] = typer.Argument(
+        ...,
+        help="Files or directories to analyze",
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output file path (.dot extension)",
+    ),
+    format: str = typer.Option(
+        "dot",
+        "--format",
+        "-f",
+        help="Output format: dot, stats",
+    ),
+) -> None:
+    """Generate security graph visualization.
+
+    Creates a GraphViz DOT file showing relationships between entry points,
+    data flows, and security sinks. The graph can be rendered using GraphViz:
+
+        dot -Tpng security-graph.dot -o security-graph.png
+
+    Example usage:
+        hackmenot graph . --output security.dot
+        hackmenot graph src/ --format stats
+    """
+    from hackmenot.graph.builder import SecurityGraphBuilder
+
+    # Validate paths exist
+    for path in paths:
+        if not path.exists():
+            console.print(f"Error: Path does not exist: {path}")
+            raise typer.Exit(1)
+
+    # Build security graph
+    console.print("[dim]Building security graph...[/dim]")
+    builder = SecurityGraphBuilder()
+    builder.build(paths)
+
+    if format == "stats":
+        # Show statistics
+        stats = builder.get_stats()
+        console.print()
+        console.print("[bold]Security Graph Statistics[/bold]")
+        console.print(f"  Total nodes: {stats['total_nodes']}")
+        console.print(f"  Entry points: {stats['entry_points']}")
+        console.print(f"  Security sinks: {stats['sinks']}")
+        console.print(f"  Data flows: {stats['total_edges']}")
+        console.print(
+            f"  Vulnerable flows: {stats['vulnerable_flows']} "
+            + ("[red]⚠️[/red]" if stats["vulnerable_flows"] > 0 else "")
+        )
+        console.print()
+    else:
+        # Generate DOT output
+        if output:
+            builder.write_dot(output)
+            console.print(f"[green]✓[/green] Security graph written to: {output}")
+            console.print()
+            console.print("[dim]To visualize:[/dim]")
+            console.print(f"  dot -Tpng {output} -o {output.stem}.png")
+            console.print(f"  dot -Tsvg {output} -o {output.stem}.svg")
+        else:
+            # Output to stdout
+            dot_content = builder.to_dot()
+            console.print(dot_content)
