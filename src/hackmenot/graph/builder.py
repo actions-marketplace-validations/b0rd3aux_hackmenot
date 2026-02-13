@@ -188,6 +188,18 @@ class SecurityGraphBuilder:
         type_name = sink.type.value.replace("_", " ").title()
         return f"{emoji} {type_name}\\n{sink.operation}"
 
+    def _escape_label(self, label: str) -> str:
+        """Escape special characters in GraphViz labels.
+
+        Args:
+            label: Raw label string.
+
+        Returns:
+            Escaped label safe for DOT format.
+        """
+        # Replace angle brackets to avoid HTML parsing issues
+        return label.replace("<", "[").replace(">", "]")
+
     def to_dot(self) -> str:
         """Generate GraphViz DOT format output.
 
@@ -205,8 +217,9 @@ class SecurityGraphBuilder:
         for node in self.nodes:
             if node.type == "entry_point":
                 color = self._get_node_color(node.risk_level)
+                escaped_label = self._escape_label(node.label)
                 lines.append(
-                    f'  {node.id} [label="{node.label}", ' f'fillcolor="{color}", shape=box];'
+                    f'  "{node.id}" [label="{escaped_label}", ' f'fillcolor="{color}", shape=box];'
                 )
 
         lines.append("")
@@ -214,8 +227,10 @@ class SecurityGraphBuilder:
         for node in self.nodes:
             if node.type == "sink":
                 color = self._get_node_color(node.risk_level)
+                escaped_label = self._escape_label(node.label)
                 lines.append(
-                    f'  {node.id} [label="{node.label}", ' f'fillcolor="{color}", shape=ellipse];'
+                    f'  "{node.id}" [label="{escaped_label}", '
+                    f'fillcolor="{color}", shape=ellipse];'
                 )
 
         lines.append("")
@@ -225,7 +240,7 @@ class SecurityGraphBuilder:
             style = "bold" if edge.is_vulnerable else "solid"
             label = edge.label or ""
             lines.append(
-                f"  {edge.source} -> {edge.target} "
+                f'  "{edge.source}" -> "{edge.target}" '
                 f'[label="{label}", color="{color}", style={style}];'
             )
 
