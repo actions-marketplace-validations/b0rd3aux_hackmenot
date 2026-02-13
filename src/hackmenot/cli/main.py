@@ -607,3 +607,108 @@ def surface(
 
             console.print(table)
             console.print()
+
+
+@app.command()
+def flows(
+    paths: list[Path] = typer.Argument(
+        ...,
+        help="Files or directories to analyze",
+    ),
+    format: OutputFormat = typer.Option(
+        OutputFormat.terminal,
+        "--format",
+        "-f",
+        help="Output format: terminal, json",
+    ),
+    show_sanitized: bool = typer.Option(
+        False,
+        "--show-sanitized",
+        help="Show flows that appear to be sanitized",
+    ),
+) -> None:
+    """Trace data flows from entry points to security sinks.
+
+    Identifies paths where untrusted input from entry points flows to
+    security-sensitive operations (SQL queries, shell commands, etc.)
+    without proper sanitization.
+
+    Example:
+        hackmenot flows .
+        hackmenot flows src/ --format json
+    """
+    from hackmenot.graph.dataflow import DataFlowTracker
+
+    # Validate paths exist
+    for path in paths:
+        if not path.exists():
+            console.print(f"Error: Path does not exist: {path}")
+            raise typer.Exit(1)
+
+    # Analyze data flows
+    tracker = DataFlowTracker()
+    flow_paths = tracker.analyze(paths)
+
+    # Filter out sanitized flows unless requested
+    if not show_sanitized:
+        flow_paths = [flow for flow in flow_paths if not flow.sanitized]
+
+    if format == OutputFormat.json:
+        # JSON output
+        output = {
+            "total_flows": len(flow_paths),
+            "unsanitized_flows": sum(1 for f in flow_paths if not f.sanitized),
+            "flows": [
+                {
+                    "source": {
+                        "entry_point": flow.source.entry_point.name,
+                        "parameter": flow.source.parameter,
+                        "file": str(flow.source.file),
+                        "line": flow.source.line,
+                    },
+                    "sink": {
+                        "type": flow.sink.type.value,
+                        "operation": flow.sink.operation,
+                        "file": str(flow.sink.file),
+                        "line": flow.sink.line,
+                    },
+                    "sanitized": flow.sanitized,
+                    "path_length": len(flow.path),
+                }
+                for flow in flow_paths
+            ],
+        }
+        console.print_json(json.dumps(output, indent=2))
+    else:
+        # Terminal output
+        from rich.table import Table
+
+        console.print()
+        console.print("[bold]Data Flow Analysis[/bold]")
+        console.print(f"  Total flows: {len(flow_paths)}")
+        console.print(
+            f"  Unsanitized flows: {sum(1 for f in flow_paths if not f.sanitized)} "
+            + ("[yellow]⚠️[/yellow]" if any(not f.sanitized for f in flow_paths) else "")
+        )
+        console.print()
+
+        if not flow_paths:
+            console.print("[dim]No data flows detected[/dim]")
+            return
+
+        table = Table(title="Data Flows from Entry Points to Sinks", show_header=True)
+        table.add_column("Source", style="cyan")
+        table.add_column("Sink", style="red")
+        table.add_column("Type", style="yellow")
+        table.add_column("Sanitized", style="green")
+
+        for flow in flow_paths:
+            source_desc = f"{flow.source.entry_point.name}() [{flow.source.parameter}]"
+            sink_desc = f"{flow.sink.operation} ({flow.sink.file.name}:{flow.sink.line})"
+            sink_type = flow.sink.type.value.replace("_", " ").title()
+            sanitized = "✓" if flow.sanitized else "[red]✗[/red]"
+
+            table.add_row(source_desc, sink_desc, sink_type, sanitized)
+
+        console.print(table)
+        console.print()

@@ -2,4 +2,12 @@
 
 from __future__ import annotations
 
-__all__ = ["AttackSurface", "EntryPoint", "SurfaceMapper"]
+__all__ = [
+    "AttackSurface",
+    "EntryPoint",
+    "SurfaceMapper",
+    "DataFlowPath",
+    "DataFlowTracker",
+    "TaintSink",
+    "TaintSource",
+]
