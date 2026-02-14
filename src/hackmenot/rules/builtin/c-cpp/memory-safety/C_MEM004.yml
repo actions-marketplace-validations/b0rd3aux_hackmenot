@@ -1,0 +1,60 @@
+id: C_MEM004
+name: Double Free
+severity: high
+category: memory-safety
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "free"
+    - "delete"
+message: |
+  Potential double-free detected. Freeing the same memory twice causes heap corruption
+  and is a serious security vulnerability.
+
+  Double-free can lead to:
+  - Heap metadata corruption
+  - Arbitrary code execution
+  - Denial of service
+fix: |
+  Prevent double-free with these techniques:
+
+  1. Set pointers to NULL immediately after freeing:
+  free(ptr);
+  ptr = NULL;
+  // Calling free(ptr) again is now safe (no-op)
+
+  2. Use C++ smart pointers (automatic):
+  std::unique_ptr<T> ptr(new T);
+  // Cannot be double-freed - ownership is clear
+
+  3. Check before freeing:
+  if (ptr != NULL) {
+      free(ptr);
+      ptr = NULL;
+  }
+
+  4. Use std::vector/std::string instead of manual allocation:
+  std::vector<int> data;  // Automatic memory management
+education: |
+  **Why AI makes this mistake:**
+  AI creates double-free bugs because:
+  - Complex control flow makes tracking difficult
+  - Error handling paths may free the same pointer
+  - Aliasing: multiple pointers to the same memory
+  - Missing ownership context across functions
+
+  **Impact:**
+  Double-free vulnerabilities are highly exploitable:
+  - Heap metadata corruption allows arbitrary writes
+  - Can bypass security mitigations like ASLR
+  - CWE-415: Double Free
+  - Frequently leads to remote code execution
+
+  **Best practice:**
+  Use RAII and smart pointers in C++. In C, always set pointers to NULL
+  after freeing. Use defensive programming with NULL checks.
+references:
+  - https://cwe.mitre.org/data/definitions/415.html
+  - https://owasp.org/www-community/vulnerabilities/Doubly_freeing_memory

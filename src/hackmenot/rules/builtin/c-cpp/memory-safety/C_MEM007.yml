@@ -1,0 +1,58 @@
+id: C_MEM007
+name: Stack Buffer Overflow
+severity: critical
+category: memory-safety
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "gets"
+    - "sprintf"
+    - "vsprintf"
+message: |
+  Stack buffer overflow risk detected. These functions write to stack buffers without
+  bounds checking, enabling stack smashing attacks.
+
+  Stack buffer overflows can lead to:
+  - Return address overwrite
+  - Arbitrary code execution
+  - Control flow hijacking
+  - Security bypass
+fix: |
+  Replace dangerous functions with safe alternatives:
+
+  1. Replace gets() with fgets():
+  char buf[SIZE];
+  fgets(buf, sizeof(buf), stdin);  // Size-limited
+
+  2. Replace sprintf() with snprintf():
+  char buf[SIZE];
+  snprintf(buf, sizeof(buf), "%s", data);  // Bounds checked
+
+  3. Replace vsprintf() with vsnprintf():
+  vsnprintf(buf, sizeof(buf), fmt, args);
+
+  4. For C++, use std::string (recommended):
+  std::string result = std::format("{}", data);  // C++20
+education: |
+  **Why AI makes this mistake:**
+  AI uses dangerous stack functions because:
+  - Legacy code examples in training data
+  - Simple APIs are attractive
+  - Doesn't reason about stack layout/exploitation
+  - Missing modern C++ knowledge
+
+  **Impact:**
+  Stack overflows are the classic exploitation vector:
+  - Return-to-libc attacks
+  - ROP (Return-Oriented Programming) chains
+  - Can bypass stack canaries with careful overflows
+  - CWE-121: Stack-based Buffer Overflow
+
+  **Best practice:**
+  Never use gets(), sprintf(), or vsprintf(). Use bounded variants
+  (fgets, snprintf, vsnprintf) or C++ std::string.
+references:
+  - https://cwe.mitre.org/data/definitions/121.html
+  - https://owasp.org/www-community/vulnerabilities/Buffer_Overflow

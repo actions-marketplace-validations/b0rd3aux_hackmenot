@@ -1,0 +1,67 @@
+id: C_MEM006
+name: Memory Leak
+severity: medium
+category: memory-safety
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "malloc"
+    - "calloc"
+    - "realloc"
+    - "new"
+message: |
+  Potential memory leak detected. Allocated memory must be explicitly freed to avoid
+  exhausting system resources.
+
+  Memory leaks can cause:
+  - Resource exhaustion
+  - Denial of service
+  - Performance degradation
+  - System instability
+fix: |
+  Prevent memory leaks with proper cleanup:
+
+  1. Pair malloc with free:
+  char* buf = malloc(size);
+  // ... use buf ...
+  free(buf);
+
+  2. Use C++ RAII with smart pointers (automatic):
+  {
+      std::unique_ptr<char[]> buf(new char[size]);
+      // Automatically freed when scope exits
+  }
+
+  3. Use standard containers (recommended):
+  std::vector<char> buf(size);  // Automatic cleanup
+
+  4. Ensure cleanup in all error paths:
+  char* buf = malloc(size);
+  if (error) {
+      free(buf);  // Don't forget cleanup on error!
+      return -1;
+  }
+  free(buf);
+education: |
+  **Why AI makes this mistake:**
+  AI creates memory leaks because:
+  - Doesn't track allocation lifetime across functions
+  - Missing cleanup in error handling paths
+  - Early returns skip cleanup code
+  - Lack of ownership context
+
+  **Impact:**
+  Memory leaks cause:
+  - Gradual resource exhaustion
+  - Denial of service in long-running processes
+  - Performance degradation over time
+  - CWE-401: Memory Leak
+
+  **Best practice:**
+  In C++, use RAII: std::vector, std::string, std::unique_ptr. These
+  automatically free resources. In C, ensure free() is called in all paths.
+references:
+  - https://cwe.mitre.org/data/definitions/401.html
+  - https://en.cppreference.com/w/cpp/memory/unique_ptr
