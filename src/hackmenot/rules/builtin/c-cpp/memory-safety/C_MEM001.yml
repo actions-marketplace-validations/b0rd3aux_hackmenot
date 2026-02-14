@@ -1,0 +1,56 @@
+id: C_MEM001
+name: Buffer Overflow - strcpy
+severity: critical
+category: memory-safety
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "strcpy"
+message: |
+  Unsafe use of strcpy() detected. This function does not perform bounds checking
+  and can cause buffer overflows if the source string is longer than the destination.
+
+  Buffer overflows are a critical security vulnerability that can lead to:
+  - Arbitrary code execution
+  - Denial of service
+  - Information disclosure
+fix: |
+  Replace strcpy() with safer alternatives:
+
+  1. Use strncpy() with explicit size limit:
+  strncpy(dest, src, sizeof(dest) - 1);
+  dest[sizeof(dest) - 1] = '\0';  // Ensure null termination
+
+  2. For C++, use std::string or std::string_view:
+  std::string dest = src;  // Safe, automatic bounds checking
+
+  3. Use strlcpy() if available (BSD, some Unix):
+  strlcpy(dest, src, sizeof(dest));
+
+  4. Use snprintf() for formatted strings:
+  snprintf(dest, sizeof(dest), "%s", src);
+education: |
+  **Why AI makes this mistake:**
+  AI assistants suggest strcpy() because:
+  - It appears frequently in legacy code and older tutorials
+  - It has a simple, intuitive API
+  - AI doesn't always recognize the security implications
+  - The AI may be trained on code from before modern security practices
+
+  **Impact:**
+  Buffer overflows from strcpy() are among the most exploited vulnerabilities:
+  - Stack smashing attacks can overwrite return addresses
+  - Heap corruption can lead to arbitrary code execution
+  - CWE-120: Buffer Copy without Checking Size of Input
+  - OWASP Top 10: A03:2021 - Injection
+
+  **Best practice:**
+  Never use strcpy() in production code. Always use bounded string operations
+  that check the destination buffer size. In modern C++, prefer std::string
+  which manages memory automatically and prevents buffer overflows.
+references:
+  - https://cwe.mitre.org/data/definitions/120.html
+  - https://www.owasp.org/index.php/Buffer_Overflow
+  - https://en.cppreference.com/w/c/string/byte/strcpy
