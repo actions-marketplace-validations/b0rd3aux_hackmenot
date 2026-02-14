@@ -13,4 +13,9 @@ __all__ = [
     "SecurityGraphBuilder",
     "GraphNode",
     "GraphEdge",
+    "AttackPath",
+    "AttackPathAnalyzer",
+    "ExploitChain",
+    "RiskAnalysis",
+    "RiskLevel",
 ]

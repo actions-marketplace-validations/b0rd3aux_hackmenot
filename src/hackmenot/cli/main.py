@@ -20,6 +20,7 @@ from hackmenot.core.models import ScanResult, Severity
 from hackmenot.core.parallel_scanner import ParallelScanner
 from hackmenot.core.scanner import Scanner
 from hackmenot.fixes.diff import DiffGenerator
+from hackmenot.graph.analyzer import RiskAnalysis
 from hackmenot.reporters.terminal import TerminalReporter
 
 app = typer.Typer(
@@ -784,3 +785,216 @@ def graph(
             # Output to stdout
             dot_content = builder.to_dot()
             console.print(dot_content)
+
+
+@app.command()
+def analyze(
+    paths: list[Path] = typer.Argument(
+        ...,
+        help="Files or directories to analyze",
+    ),
+    format: str = typer.Option(
+        "table",
+        "--format",
+        "-f",
+        help="Output format: table, json, summary",
+    ),
+    show_chains: bool = typer.Option(
+        True,
+        "--show-chains/--no-chains",
+        help="Show exploit chains",
+    ),
+    show_steps: bool = typer.Option(
+        False,
+        "--show-steps",
+        help="Show detailed exploit steps for each path",
+    ),
+) -> None:
+    """Analyze attack paths and calculate risk scores.
+
+    Performs comprehensive risk analysis of the codebase by:
+    - Scoring attack paths from entry points to security sinks
+    - Detecting exploit chains (multiple vulnerabilities through one entry point)
+    - Prioritizing vulnerabilities for remediation
+    - Generating actionable recommendations
+
+    Example usage:
+        hackmenot analyze . --show-chains
+        hackmenot analyze src/ --format json
+        hackmenot analyze . --show-steps
+    """
+    from hackmenot.graph.analyzer import AttackPathAnalyzer
+    from hackmenot.graph.dataflow import DataFlowTracker
+    from hackmenot.graph.surface import SurfaceMapper
+
+    # Validate paths exist
+    for path in paths:
+        if not path.exists():
+            console.print(f"Error: Path does not exist: {path}")
+            raise typer.Exit(1)
+
+    # Analyze attack surface and data flows
+    console.print("[dim]Analyzing attack surface...[/dim]")
+    surface_mapper = SurfaceMapper()
+    attack_surface = surface_mapper.map_surface(paths)
+
+    console.print("[dim]Tracing data flows...[/dim]")
+    flow_tracker = DataFlowTracker()
+    data_flows = flow_tracker.analyze(paths)
+
+    console.print("[dim]Calculating risk scores...[/dim]")
+    analyzer = AttackPathAnalyzer()
+    analysis = analyzer.analyze(attack_surface, data_flows)
+
+    console.print()
+
+    if format == "json":
+        # JSON output
+        import json
+
+        output = {
+            "total_paths": analysis.total_paths,
+            "overall_risk_score": analysis.overall_risk_score,
+            "critical_paths": len(analysis.critical_paths),
+            "high_risk_paths": len(analysis.high_risk_paths),
+            "medium_risk_paths": len(analysis.medium_risk_paths),
+            "low_risk_paths": len(analysis.low_risk_paths),
+            "exploit_chains": len(analysis.exploit_chains),
+            "recommendations": analysis.top_recommendations,
+            "attack_paths": [
+                {
+                    "entry_point": path.entry_point_name,
+                    "file": str(path.entry_point_file),
+                    "line": path.entry_point_line,
+                    "sink_type": path.sink_type.value,
+                    "sink_operation": path.sink_operation,
+                    "risk_score": path.risk_score,
+                    "risk_level": path.risk_level.value,
+                    "authenticated": path.authenticated,
+                    "sanitized": path.sanitized,
+                }
+                for path in (
+                    analysis.critical_paths + analysis.high_risk_paths + analysis.medium_risk_paths
+                )
+            ],
+        }
+        print(json.dumps(output, indent=2))
+
+    elif format == "summary":
+        # Summary output
+        console.print("[bold]Risk Analysis Summary[/bold]")
+        console.print()
+        console.print(f"Overall Risk Score: [red]{analysis.overall_risk_score}/100[/red]")
+        console.print(f"Total Attack Paths: {analysis.total_paths}")
+        console.print()
+        console.print(f"[red]●[/red] Critical: {len(analysis.critical_paths)}")
+        console.print(f"[yellow]●[/yellow] High: {len(analysis.high_risk_paths)}")
+        console.print(f"[blue]●[/blue] Medium: {len(analysis.medium_risk_paths)}")
+        console.print(f"[dim]●[/dim] Low: {len(analysis.low_risk_paths)}")
+        console.print()
+
+        if analysis.exploit_chains:
+            console.print(f"[red]⚠️  {len(analysis.exploit_chains)} exploit chain(s) detected[/red]")
+            console.print()
+
+        console.print("[bold]Top Recommendations:[/bold]")
+        for rec in analysis.top_recommendations:
+            console.print(f"  • {rec}")
+        console.print()
+
+    else:
+        # Table output (default)
+        _display_risk_analysis(analysis, show_chains, show_steps)
+
+
+def _display_risk_analysis(analysis: RiskAnalysis, show_chains: bool, show_steps: bool) -> None:
+    """Display risk analysis in table format.
+
+    Args:
+        analysis: Risk analysis results.
+        show_chains: Whether to show exploit chains.
+        show_steps: Whether to show detailed exploit steps.
+    """
+    from rich.table import Table
+
+    # Overall summary
+    console.print("[bold]Attack Path Risk Analysis[/bold]")
+    console.print()
+    console.print(f"Overall Risk Score: [red]{analysis.overall_risk_score}/100[/red]")
+    console.print(f"Total Attack Paths: {analysis.total_paths}")
+    console.print()
+
+    # Show critical paths
+    if analysis.critical_paths:
+        console.print("[bold red]Critical Risk Paths[/bold red]")
+        table = Table(show_header=True, header_style="bold red")
+        table.add_column("Entry Point", style="cyan")
+        table.add_column("Sink", style="red")
+        table.add_column("Risk", style="red", justify="right")
+        table.add_column("Auth", justify="center")
+        table.add_column("Mitigation", style="yellow")
+
+        for path in analysis.critical_paths[:10]:  # Top 10
+            auth = "✓" if path.authenticated else "[red]✗[/red]"
+            table.add_row(
+                f"{path.entry_point_name}()\n{path.entry_point_file.name}:{path.entry_point_line}",
+                f"{path.sink_type.value}\n{path.sink_operation}",
+                f"{path.risk_score}",
+                auth,
+                path.mitigation,
+            )
+
+            if show_steps:
+                console.print(table)
+                table = Table(show_header=True, header_style="bold red")
+                table.add_column("Entry Point", style="cyan")
+                table.add_column("Sink", style="red")
+                table.add_column("Risk", style="red", justify="right")
+                table.add_column("Auth", justify="center")
+                table.add_column("Mitigation", style="yellow")
+
+                console.print(f"\n[bold]Exploit Steps for {path.entry_point_name}():[/bold]")
+                for i, step in enumerate(path.exploit_steps, 1):
+                    console.print(f"  {i}. {step}")
+                console.print()
+
+        if not show_steps:
+            console.print(table)
+            console.print()
+
+    # Show high risk paths
+    if analysis.high_risk_paths:
+        console.print("[bold yellow]High Risk Paths[/bold yellow]")
+        table = Table(show_header=True, header_style="bold yellow")
+        table.add_column("Entry Point", style="cyan")
+        table.add_column("Sink", style="red")
+        table.add_column("Risk", style="yellow", justify="right")
+        table.add_column("Auth", justify="center")
+
+        for path in analysis.high_risk_paths[:5]:  # Top 5
+            auth = "✓" if path.authenticated else "[red]✗[/red]"
+            table.add_row(
+                f"{path.entry_point_name}()\n{path.entry_point_file.name}:{path.entry_point_line}",
+                f"{path.sink_type.value}\n{path.sink_operation}",
+                f"{path.risk_score}",
+                auth,
+            )
+
+        console.print(table)
+        console.print()
+
+    # Show exploit chains
+    if show_chains and analysis.exploit_chains:
+        console.print("[bold red]Exploit Chains[/bold red]")
+        for chain in analysis.exploit_chains:
+            console.print(f"\n[red]{chain.chain_id}[/red] (Risk: {chain.combined_risk_score}/100)")
+            console.print(f"  {chain.description}")
+            console.print(f"  [dim]{chain.exploit_scenario}[/dim]")
+            console.print(f"  Paths in chain: {len(chain.attack_paths)}")
+        console.print()
+
+    # Show recommendations
+    console.print("[bold]Top Recommendations:[/bold]")
+    for rec in analysis.top_recommendations:
+        console.print(f"  • {rec}")
+    console.print()
