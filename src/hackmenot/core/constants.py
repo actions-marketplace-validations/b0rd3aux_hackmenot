@@ -15,6 +15,7 @@ GO_EXTENSIONS = {".go"}
 TERRAFORM_EXTENSIONS = {".tf", ".tfvars"}
 RUST_EXTENSIONS = {".rs"}
 JAVA_EXTENSIONS = {".java"}
+C_CPP_EXTENSIONS = {".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".hxx"}
 
 # Derived set of all supported extensions
 SUPPORTED_EXTENSIONS = (
@@ -24,6 +25,7 @@ SUPPORTED_EXTENSIONS = (
     | TERRAFORM_EXTENSIONS
     | RUST_EXTENSIONS
     | JAVA_EXTENSIONS
+    | C_CPP_EXTENSIONS
 )
 
 # Directories to skip during scanning
