@@ -84,7 +84,7 @@ hackmenot deps . --check-vulns
 
 <img src="assets/deps-scan.gif" alt="Dependency scanning" width="700">
 
-### 🎯 Security Graph Visualization (v2.1)
+### 🎯 Security Graph Visualization (v2.1.1)
 
 Visualize your application's attack surface with interactive security graphs. Trace data flows from entry points to security sinks, identify vulnerable paths, and understand your security posture at a glance.
 
