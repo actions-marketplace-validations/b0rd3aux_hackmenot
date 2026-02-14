@@ -90,6 +90,8 @@ Visualize your application's attack surface with **interactive security graphs**
 
 **[🎨 View Interactive Demo →](https://github.com/b0rd3aux/hackmenot/blob/main/assets/security-graph-demo.html)** | [Download](https://raw.githubusercontent.com/b0rd3aux/hackmenot/main/assets/security-graph-demo.html)
 
+<img src="assets/security-graph-preview.png" alt="Interactive security graph visualization" width="700">
+
 ```bash
 # Generate security graph
 hackmenot graph . -o security.dot
