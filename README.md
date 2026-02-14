@@ -84,6 +84,30 @@ hackmenot deps . --check-vulns
 
 <img src="assets/deps-scan.gif" alt="Dependency scanning" width="700">
 
+### 🎯 Security Graph Visualization (v2.1)
+
+Visualize your application's attack surface with interactive security graphs. Trace data flows from entry points to security sinks, identify vulnerable paths, and understand your security posture at a glance.
+
+```bash
+# Generate security graph
+hackmenot graph . -o security.dot
+dot -Tpng security.dot -o security.png
+
+# Or use the interactive HTML viewer
+hackmenot graph . --interactive -o security.html
+```
+
+<img src="assets/security-graph-preview.png" alt="Security graph visualization" width="700">
+
+**Features:**
+- 🔍 **Attack Surface Mapping** - Identify all entry points (API endpoints, CLI commands, webhooks)
+- 🌊 **Data Flow Analysis** - Trace untrusted data from sources to sinks
+- 📊 **Risk Scoring** - Calculate exploit likelihood (0-100) based on authentication, sink type, and sanitization
+- 🎨 **Interactive Visualization** - Search, filter, and explore your security graph in the browser
+- 🎯 **Exploit Chain Detection** - Find compound vulnerabilities through single entry points
+
+[Try the interactive demo →](assets/security-graph-demo.html)
+
 ### CI/CD & GitHub Security
 
 Native GitHub Action with SARIF support. Findings appear directly in GitHub's Security tab.
@@ -193,6 +217,10 @@ hackmenot scan . --changed-since origin/main
 # Dependency scanning
 hackmenot deps .
 hackmenot deps . --check-vulns
+
+# Security graph visualization
+hackmenot graph . -o security.dot
+hackmenot graph . --interactive -o security.html
 ```
 
 ---
