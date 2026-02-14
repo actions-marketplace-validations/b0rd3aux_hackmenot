@@ -1,0 +1,66 @@
+id: C_MEM005
+name: NULL Pointer Dereference
+severity: medium
+category: memory-safety
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "malloc"
+    - "calloc"
+    - "realloc"
+message: |
+  Potential NULL pointer dereference. Memory allocation functions can return NULL
+  on failure, and dereferencing NULL causes crashes or undefined behavior.
+
+  NULL dereference can result in:
+  - Denial of service (crash)
+  - Undefined behavior
+  - Potential exploitation in some architectures
+fix: |
+  Always check allocation results before use:
+
+  1. Check malloc/calloc result:
+  char* buf = malloc(size);
+  if (buf == NULL) {
+      // Handle allocation failure
+      return ERROR_CODE;
+  }
+
+  2. For C++, prefer new with exception handling:
+  try {
+      char* buf = new char[size];  // Throws std::bad_alloc on failure
+  } catch (const std::bad_alloc& e) {
+      // Handle allocation failure
+  }
+
+  3. Use C++ standard containers (recommended):
+  std::vector<char> buf(size);  // Throws on failure, no NULL checks needed
+
+  4. Use nothrow version with explicit check:
+  char* buf = new(std::nothrow) char[size];
+  if (!buf) {
+      // Handle allocation failure
+  }
+education: |
+  **Why AI makes this mistake:**
+  AI skips NULL checks because:
+  - Training data often shows "happy path" code
+  - Missing error handling context
+  - Assumes unlimited memory availability
+  - Doesn't generate defensive programming patterns
+
+  **Impact:**
+  NULL dereferences cause:
+  - Crashes and denial of service
+  - In kernel code: complete system crash
+  - CWE-476: NULL Pointer Dereference
+  - Potential exploitation on some platforms
+
+  **Best practice:**
+  Always check allocation results. In C++, prefer RAII containers
+  (std::vector, std::string) which handle errors via exceptions.
+references:
+  - https://cwe.mitre.org/data/definitions/476.html
+  - https://en.cppreference.com/w/c/memory/malloc

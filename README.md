@@ -12,8 +12,8 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org/downloads/)
 
-![100+ Security Rules](https://img.shields.io/badge/rules-120+-green)
-![6 Languages](https://img.shields.io/badge/languages-Python%20%7C%20JS%20%7C%20Go%20%7C%20Rust%20%7C%20Java%20%7C%20Terraform-orange)
+![100+ Security Rules](https://img.shields.io/badge/rules-138+-green)
+![7 Languages](https://img.shields.io/badge/languages-Python%20%7C%20JS%20%7C%20Go%20%7C%20Rust%20%7C%20Java%20%7C%20C/C++%20%7C%20Terraform-orange)
 ![Enterprise Scale](https://img.shields.io/badge/scans-10k%20files%20%3C10s-purple)
 ![Parallel Scanning](https://img.shields.io/badge/parallel-enterprise%20scale-blueviolet)
 
@@ -60,7 +60,7 @@ That's it. No config files, no setup, no API keys.
 
 ### Scan & Detect
 
-120+ security rules purpose-built for AI-generated code patterns across Python, JavaScript/TypeScript, Go, Rust, Java, and Terraform.
+138+ security rules purpose-built for AI-generated code patterns across Python, JavaScript/TypeScript, Go, Rust, Java, C/C++, and Terraform.
 
 <img src="assets/hero-scan.gif" alt="hackmenot scanning code" width="700">
 

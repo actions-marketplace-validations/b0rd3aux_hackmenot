@@ -5,6 +5,7 @@ from typing import Any
 
 from hackmenot.core.models import Finding, Rule
 from hackmenot.parsers.base import ParseResult
+from hackmenot.parsers.cpp import CppParseResult
 from hackmenot.parsers.golang import GoParseResult
 from hackmenot.parsers.java import JavaParseResult
 from hackmenot.parsers.javascript import JSParseResult
@@ -58,6 +59,8 @@ class RulesEngine:
                 rule_findings = self._check_rust_rule(rule, parse_result, str(file_path))
             elif language == "java" and isinstance(parse_result, JavaParseResult):
                 rule_findings = self._check_java_rule(rule, parse_result, str(file_path))
+            elif language == "cpp" and isinstance(parse_result, CppParseResult):
+                rule_findings = self._check_cpp_rule(rule, parse_result, str(file_path))
             else:
                 rule_findings = self._check_rule(rule, parse_result, file_path)
             findings.extend(rule_findings)
@@ -87,6 +90,13 @@ class RulesEngine:
             ".tfvars": "terraform",
             ".rs": "rust",
             ".java": "java",
+            ".c": "cpp",
+            ".cpp": "cpp",
+            ".cc": "cpp",
+            ".cxx": "cpp",
+            ".h": "cpp",
+            ".hpp": "cpp",
+            ".hxx": "cpp",
         }
         return ext_map.get(file_path.suffix.lower(), "unknown")
 
@@ -620,6 +630,61 @@ class RulesEngine:
                             line=assign.line,
                             column=assign.column,
                             code_snippet=f"{assign.target} = ...",
+                        )
+                    )
+
+        return findings
+
+    def _check_cpp_rule(
+        self,
+        rule: Rule,
+        parse_result: Any,
+        file_path: str,
+    ) -> list[Finding]:
+        """Check a C/C++ rule against parse result."""
+        findings = []
+        pattern = rule.pattern
+        pattern_type = pattern.get("type", "")
+
+        if pattern_type == "call":
+            names = [n.upper() for n in pattern.get("names", [])]
+            for call in parse_result.get_calls():
+                if any(name in call.name.upper() for name in names):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=call.line,
+                            column=call.column,
+                            code_snippet=call.name,
+                        )
+                    )
+
+        elif pattern_type == "include":
+            names = [n.lower() for n in pattern.get("names", [])]
+            for include in parse_result.get_includes():
+                if any(name in include.lower() for name in names):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=1,
+                            column=0,
+                            code_snippet=f"#include {include}",
+                        )
+                    )
+
+        elif pattern_type == "string":
+            contains = [c.upper() for c in pattern.get("contains", [])]
+            for string in parse_result.get_strings():
+                if any(c in string.value.upper() for c in contains):
+                    findings.append(
+                        self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=string.line,
+                            column=string.column,
+                            code_snippet=string.value[:50],
                         )
                     )
 

@@ -1,0 +1,55 @@
+id: C_MEM002
+name: Buffer Overflow - strcat
+severity: critical
+category: memory-safety
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "strcat"
+message: |
+  Unsafe use of strcat() detected. This function does not perform bounds checking
+  and can cause buffer overflows if the combined length exceeds the destination buffer.
+
+  Buffer overflows from strcat() are especially dangerous because:
+  - The function appends without checking remaining space
+  - Multiple concatenations compound the risk
+  - Stack or heap corruption can lead to code execution
+fix: |
+  Replace strcat() with safer alternatives:
+
+  1. Use strncat() with explicit size limit:
+  size_t remaining = sizeof(dest) - strlen(dest) - 1;
+  strncat(dest, src, remaining);
+
+  2. For C++, use std::string:
+  std::string result = dest;
+  result += src;  // Safe, automatic bounds checking
+
+  3. Use strlcat() if available (BSD):
+  strlcat(dest, src, sizeof(dest));
+
+  4. Use snprintf() for formatted concatenation:
+  snprintf(dest + strlen(dest), sizeof(dest) - strlen(dest), "%s", src);
+education: |
+  **Why AI makes this mistake:**
+  AI assistants suggest strcat() because:
+  - It appears in legacy code and tutorials
+  - The API is simple and intuitive
+  - AI doesn't track cumulative buffer usage across calls
+  - Multiple strncat() calls are harder to generate correctly
+
+  **Impact:**
+  Buffer overflows from strcat() enable:
+  - Remote code execution
+  - Stack smashing and return address overwrite
+  - Heap corruption leading to arbitrary writes
+  - CWE-120: Buffer Copy without Checking Size of Input
+
+  **Best practice:**
+  Never use strcat() in production code. Use bounded operations that account
+  for remaining buffer space. In C++, prefer std::string which prevents overflows.
+references:
+  - https://cwe.mitre.org/data/definitions/120.html
+  - https://en.cppreference.com/w/c/string/byte/strcat

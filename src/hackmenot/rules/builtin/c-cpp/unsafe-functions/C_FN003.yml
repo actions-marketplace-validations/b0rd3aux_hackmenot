@@ -1,0 +1,62 @@
+id: C_FN003
+name: Unsafe scanf()
+severity: high
+category: unsafe-functions
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "scanf"
+    - "fscanf"
+    - "sscanf"
+message: |
+  Use of scanf() family without field width limits detected. These functions
+  can cause buffer overflows when reading strings without size constraints.
+
+  scanf() risks:
+  - Buffer overflow on unbounded %s, %c formats
+  - No bounds checking by default
+  - Difficult to use correctly with strings
+  - Poor error handling
+fix: |
+  Use safer input methods:
+
+  1. Use scanf with explicit field widths:
+  char buf[100];
+  scanf("%99s", buf);  // Leaves room for null terminator
+
+  2. For C++, use std::cin (recommended):
+  std::string input;
+  std::cin >> input;  // Safe, automatic bounds checking
+
+  3. Use fgets() for line input:
+  char buf[100];
+  if (fgets(buf, sizeof(buf), stdin)) {
+      // Process input
+  }
+
+  4. Use std::getline() in C++:
+  std::string line;
+  std::getline(std::cin, line);
+education: |
+  **Why AI makes this mistake:**
+  AI uses scanf() unsafely because:
+  - Common in C tutorials and textbooks
+  - Simple API is attractive
+  - Doesn't generate field width limits
+  - Training data predates modern input practices
+
+  **Impact:**
+  Unsafe scanf() causes:
+  - Stack buffer overflows
+  - Arbitrary code execution
+  - CWE-120: Buffer Copy without Checking Size
+  - Particularly dangerous with user input
+
+  **Best practice:**
+  Always use field width specifiers with scanf(). In C++, prefer
+  std::cin or std::getline(). In C, prefer fgets() for line input.
+references:
+  - https://cwe.mitre.org/data/definitions/120.html
+  - https://wiki.sei.cmu.edu/confluence/display/c/INT05-C

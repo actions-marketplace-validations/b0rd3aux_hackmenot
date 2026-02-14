@@ -8,6 +8,7 @@ from pathlib import Path
 from hackmenot.core.cache import FileCache
 from hackmenot.core.config import Config
 from hackmenot.core.constants import (
+    C_CPP_EXTENSIONS,
     DEFAULT_WORKERS,
     GO_EXTENSIONS,
     JAVA_EXTENSIONS,
@@ -19,6 +20,7 @@ from hackmenot.core.constants import (
 )
 from hackmenot.core.ignores import IgnoreHandler
 from hackmenot.core.models import Finding, ScanResult, Severity
+from hackmenot.parsers.cpp import CppParser
 from hackmenot.parsers.golang import GoParser
 from hackmenot.parsers.java import JavaParser
 from hackmenot.parsers.javascript import JavaScriptParser
@@ -39,6 +41,7 @@ class Scanner:
         self.tf_parser = TerraformParser()
         self.rust_parser = RustParser()
         self.java_parser = JavaParser()
+        self.cpp_parser = CppParser()
         self.engine = RulesEngine()
         self.cache = cache
         self.config = config or Config()
@@ -226,7 +229,7 @@ class Scanner:
             file_path: The file path to check.
 
         Returns:
-            "python", "javascript", "go", or "terraform" based on the file extension.
+            "python", "javascript", "go", "terraform", "rust", "java", or "cpp" based on the file extension.
         """
         if file_path.suffix in JS_EXTENSIONS:
             return "javascript"
@@ -238,6 +241,8 @@ class Scanner:
             return "rust"
         if file_path.suffix in JAVA_EXTENSIONS:
             return "java"
+        if file_path.suffix in C_CPP_EXTENSIONS:
+            return "cpp"
         return "python"
 
     def _scan_file(self, file_path: Path) -> list[Finding]:
@@ -283,6 +288,12 @@ class Scanner:
         elif language == "java":
             # Parse Java file
             parse_result = self.java_parser.parse_file(file_path)
+            if parse_result.has_error:
+                return []
+            return self.engine.check(parse_result, file_path, ignores=ignores)
+        elif language == "cpp":
+            # Parse C/C++ file
+            parse_result = self.cpp_parser.parse_file(file_path)
             if parse_result.has_error:
                 return []
             return self.engine.check(parse_result, file_path, ignores=ignores)

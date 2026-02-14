@@ -1,0 +1,70 @@
+id: C_FN006
+name: Unsafe strtok()
+severity: medium
+category: unsafe-functions
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "strtok"
+message: |
+  Use of strtok() detected. This function is not thread-safe and modifies
+  its input string, leading to bugs in multithreaded code.
+
+  strtok() problems:
+  - Not thread-safe (uses static internal state)
+  - Modifies the input string (inserts null bytes)
+  - Cannot be nested (calls interfere with each other)
+  - Difficult to use correctly
+fix: |
+  Use thread-safe and safer alternatives:
+
+  1. Use strtok_r (POSIX) - reentrant version:
+  char* saveptr;
+  char* token = strtok_r(str, delim, &saveptr);
+  while (token) {
+      // Process token
+      token = strtok_r(NULL, delim, &saveptr);
+  }
+
+  2. For C++, use std::string methods (recommended):
+  std::string str = "a,b,c";
+  std::stringstream ss(str);
+  std::string token;
+  while (std::getline(ss, token, ',')) {
+      // Process token
+  }
+
+  3. Use std::string::find and substr:
+  size_t pos = 0;
+  while ((pos = str.find(delim)) != std::string::npos) {
+      token = str.substr(0, pos);
+      str.erase(0, pos + delim.length());
+  }
+
+  4. Use C++20 ranges (if available):
+  for (auto word : str | std::views::split(' ')) {
+      // Process word
+  }
+education: |
+  **Why AI makes this mistake:**
+  AI uses strtok() because:
+  - Common in C tutorials
+  - Simple API for string splitting
+  - Doesn't model thread safety concerns
+  - Not aware of reentrant alternatives
+
+  **Impact:**
+  strtok() causes:
+  - Race conditions in multithreaded code
+  - Unexpected behavior with nested calls
+  - Input string modification (side effects)
+  - Difficult-to-debug concurrency bugs
+
+  **Best practice:**
+  Use strtok_r() for POSIX. In C++, use std::string methods or
+  std::views::split. Never use strtok() in multithreaded code.
+references:
+  - https://wiki.sei.cmu.edu/confluence/display/c/STR06-C
+  - https://en.cppreference.com/w/c/string/byte/strtok

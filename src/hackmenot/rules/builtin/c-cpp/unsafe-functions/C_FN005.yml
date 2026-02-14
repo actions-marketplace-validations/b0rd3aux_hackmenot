@@ -1,0 +1,55 @@
+id: C_FN005
+name: Unsafe strncpy()
+severity: medium
+category: unsafe-functions
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "strncpy"
+message: |
+  Use of strncpy() detected. This function has confusing semantics and
+  doesn't always null-terminate strings, leading to vulnerabilities.
+
+  strncpy() pitfalls:
+  - Doesn't null-terminate if src length >= n
+  - Pads with zeros if src length < n (performance issue)
+  - Confusing name suggests it's safe strcpy variant
+  - Easy to use incorrectly
+fix: |
+  Use safer string copy alternatives:
+
+  1. Explicitly null-terminate after strncpy:
+  strncpy(dest, src, sizeof(dest) - 1);
+  dest[sizeof(dest) - 1] = '\\0';  // Always null-terminate
+
+  2. Use strlcpy if available (BSD, OpenBSD):
+  strlcpy(dest, src, sizeof(dest));  // Always null-terminates
+
+  3. For C++, use std::string (recommended):
+  std::string dest = src;  // Safe, automatic
+
+  4. Use snprintf for string copying:
+  snprintf(dest, sizeof(dest), "%s", src);  // Always null-terminates
+education: |
+  **Why AI makes this mistake:**
+  AI uses strncpy() because:
+  - Misleading name suggests it's the "safe" version
+  - Appears in security guidelines as strcpy replacement
+  - Doesn't understand null-termination semantics
+  - Common in legacy codebases
+
+  **Impact:**
+  strncpy() bugs cause:
+  - Non-null-terminated strings
+  - Buffer over-reads
+  - Information disclosure
+  - CWE-170: Improper Null Termination
+
+  **Best practice:**
+  Don't use strncpy(). Use strlcpy() where available, or explicitly
+  null-terminate. In C++, use std::string.
+references:
+  - https://cwe.mitre.org/data/definitions/170.html
+  - https://wiki.sei.cmu.edu/confluence/display/c/STR07-C

@@ -1,0 +1,61 @@
+id: C_MEM003
+name: Use After Free
+severity: critical
+category: memory-safety
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "free"
+    - "delete"
+message: |
+  Potential use-after-free detected. This pattern is a common source of memory corruption
+  where freed memory is accessed, leading to undefined behavior.
+
+  Use-after-free vulnerabilities can result in:
+  - Arbitrary code execution
+  - Information disclosure
+  - Denial of service crashes
+  - Memory corruption
+fix: |
+  Prevent use-after-free bugs with these practices:
+
+  1. Set pointers to NULL after freeing:
+  free(ptr);
+  ptr = NULL;  // Prevents accidental reuse
+
+  2. Use scope-based RAII in C++ (automatic cleanup):
+  {
+      std::unique_ptr<T> ptr(new T);
+      // Automatically freed when scope exits
+  }
+
+  3. Use std::shared_ptr for shared ownership:
+  auto ptr = std::make_shared<T>();
+
+  4. Avoid manual memory management entirely:
+  - Use std::vector instead of dynamic arrays
+  - Use std::string instead of char*
+  - Use smart pointers instead of raw pointers
+education: |
+  **Why AI makes this mistake:**
+  AI generates use-after-free bugs because:
+  - It doesn't track pointer lifetime across functions
+  - Manual memory management patterns from training data
+  - Missing context about ownership semantics
+  - Difficulty reasoning about aliasing and control flow
+
+  **Impact:**
+  Use-after-free is one of the most exploited vulnerability classes:
+  - Attackers can corrupt freed memory before reuse
+  - Can lead to arbitrary code execution
+  - CVE database has thousands of UAF vulnerabilities
+  - CWE-416: Use After Free
+
+  **Best practice:**
+  In modern C++, avoid manual memory management. Use RAII, smart pointers,
+  and standard containers. If using C, set freed pointers to NULL immediately.
+references:
+  - https://cwe.mitre.org/data/definitions/416.html
+  - https://owasp.org/www-community/vulnerabilities/Using_freed_memory

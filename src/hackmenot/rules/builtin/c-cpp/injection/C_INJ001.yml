@@ -1,0 +1,58 @@
+id: C_INJ001
+name: Command Injection - popen
+severity: critical
+category: injection
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "popen"
+message: |
+  Command injection risk via popen() detected. This function executes
+  commands through a shell, enabling injection attacks.
+
+  popen() risks:
+  - Command injection via shell metacharacters
+  - Similar to system() but returns a pipe
+  - User input can execute arbitrary commands
+  - PATH manipulation attacks
+fix: |
+  Use safer alternatives to popen():
+
+  1. Avoid popen() entirely - use libraries:
+  - Use C++ filesystem for directory listing
+  - Use libcurl for HTTP requests
+  - Use dedicated libraries instead of shell commands
+
+  2. If popen() is necessary, never pass user input:
+  FILE* fp = popen("/usr/bin/fixed-command arg1 arg2", "r");  // Hardcoded only
+
+  3. Sanitize with strict allowlists (if unavoidable):
+  if (is_safe_command(cmd)) {  // Implement strict validation
+      FILE* fp = popen(cmd, "r");
+  }
+
+  4. Use C++ subprocess libraries without shell:
+  // Use boost::process or similar libraries that don't invoke shell
+education: |
+  **Why AI makes this mistake:**
+  AI uses popen() because:
+  - Convenient for capturing command output
+  - Training data shows shell-based solutions
+  - Doesn't model shell injection risks
+  - Unaware of library alternatives
+
+  **Impact:**
+  popen() with user input enables:
+  - Arbitrary command execution
+  - Full system compromise
+  - CWE-78: OS Command Injection
+  - Data exfiltration via output capture
+
+  **Best practice:**
+  Never use popen() with untrusted input. Use libraries for specific
+  tasks instead of shell commands. If unavoidable, use strict allowlists.
+references:
+  - https://cwe.mitre.org/data/definitions/78.html
+  - https://owasp.org/www-community/attacks/Command_Injection
