@@ -1,0 +1,71 @@
+id: C_INT003
+name: Signedness Conversion Error
+severity: medium
+category: integer-issues
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "read"
+    - "write"
+    - "recv"
+    - "send"
+message: |
+  Potential signedness error detected. Mixing signed and unsigned integers
+  in comparisons or assignments can lead to unexpected behavior.
+
+  Signedness risks:
+  - Negative values become large positive when cast to unsigned
+  - Comparison bugs (signed -1 > unsigned 1)
+  - Buffer size calculation errors
+  - Loop termination failures
+fix: |
+  Handle signedness correctly:
+
+  1. Check return values of system calls:
+  ssize_t bytes_read = read(fd, buf, sizeof(buf));
+  if (bytes_read < 0) {
+      // Error occurred
+      return -1;
+  }
+  size_t count = (size_t)bytes_read;  // Safe after check
+
+  2. Use appropriate types:
+  // For sizes: use size_t (unsigned)
+  // For counts that can be negative: use ssize_t (signed)
+  // For array indices: use size_t
+
+  3. Avoid mixing in comparisons:
+  int signed_val = -1;
+  size_t unsigned_val = 10;
+  // WRONG: if (signed_val < unsigned_val) // -1 becomes large unsigned!
+  // RIGHT: if (signed_val < 0 || (size_t)signed_val < unsigned_val)
+
+  4. Use static_cast in C++ with checks:
+  int signed_val = get_count();
+  if (signed_val < 0) {
+      return ERROR;
+  }
+  size_t unsigned_val = static_cast<size_t>(signed_val);
+education: |
+  **Why AI makes this mistake:**
+  AI creates signedness errors because:
+  - Doesn't track signed vs unsigned types
+  - Implicit conversions seem harmless
+  - Return value checking patterns missing
+  - Doesn't understand conversion rules
+
+  **Impact:**
+  Signedness errors cause:
+  - Buffer overflows from negative sizes
+  - Broken error checking
+  - Logic bugs in bounds validation
+  - CWE-195/196: Signed to Unsigned Conversion
+
+  **Best practice:**
+  Always check for negative values before casting to unsigned.
+  Use consistent types. Check system call return values.
+references:
+  - https://cwe.mitre.org/data/definitions/195.html
+  - https://wiki.sei.cmu.edu/confluence/display/c/INT31-C
