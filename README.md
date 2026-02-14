@@ -88,7 +88,7 @@ hackmenot deps . --check-vulns
 
 Visualize your application's attack surface with **interactive security graphs**. Trace data flows from entry points to security sinks, identify vulnerable paths, and understand your security posture at a glance.
 
-**[🎨 View Interactive Demo →](https://github.com/b0rd3aux/hackmenot/blob/main/assets/security-graph-demo.html)** | [Download](https://raw.githubusercontent.com/b0rd3aux/hackmenot/main/assets/security-graph-demo.html)
+**[🎨 View Interactive Demo →](https://raw.githack.com/b0rd3aux/hackmenot/main/assets/security-graph-demo.html)** | [Source](https://github.com/b0rd3aux/hackmenot/blob/main/assets/security-graph-demo.html)
 
 <img src="assets/security-graph-preview.png" alt="Interactive security graph visualization" width="700">
 
