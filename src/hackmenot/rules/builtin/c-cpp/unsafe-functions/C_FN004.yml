@@ -1,0 +1,62 @@
+id: C_FN004
+name: Unsafe system()
+severity: critical
+category: unsafe-functions
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "system"
+message: |
+  Use of system() detected. This function executes commands through a shell,
+  making it extremely vulnerable to command injection.
+
+  system() risks:
+  - Command injection via shell metacharacters
+  - PATH manipulation attacks
+  - Shell expansion vulnerabilities
+  - Privilege escalation
+fix: |
+  Replace system() with safer alternatives:
+
+  1. Use fork and exec without shell (POSIX):
+  char* args[] = {"ls", "-la", NULL};
+  if (fork() == 0) {
+      execvp("ls", args);  // No shell, no injection
+      exit(1);
+  }
+
+  2. For C++, only use with fully controlled input:
+  // Only if command is hardcoded:
+  std::system("ls -la");  // No user input!
+
+  3. Use platform-specific APIs:
+  // POSIX: fork + execve
+  // Windows: CreateProcess
+
+  4. Avoid shell entirely - use libraries:
+  - Use C++ filesystem for file operations
+  - Use dedicated libraries for network, compression, etc.
+education: |
+  **Why AI makes this mistake:**
+  AI uses system() because:
+  - Convenient for quick scripting
+  - Familiar from shell scripts
+  - Doesn't understand shell injection risks
+  - Training data shows shell-based solutions
+
+  **Impact:**
+  system() with user input enables:
+  - Arbitrary command execution
+  - Full system compromise
+  - CWE-78: OS Command Injection
+  - One of the most dangerous vulnerabilities
+
+  **Best practice:**
+  Never use system() with untrusted input. Use fork/exec family
+  or platform APIs that don't invoke a shell. In C++, prefer
+  standard library or dedicated libraries over shell commands.
+references:
+  - https://cwe.mitre.org/data/definitions/78.html
+  - https://owasp.org/www-community/attacks/Command_Injection

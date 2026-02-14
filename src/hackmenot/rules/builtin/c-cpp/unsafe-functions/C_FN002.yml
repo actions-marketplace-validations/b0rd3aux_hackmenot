@@ -1,0 +1,64 @@
+id: C_FN002
+name: Unsafe getenv()
+severity: medium
+category: unsafe-functions
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "getenv"
+message: |
+  Use of getenv() without sanitization detected. Environment variables are
+  attacker-controlled in many contexts and must be validated before use.
+
+  getenv() risks:
+  - Injection attacks if used in commands
+  - Path traversal if used for file paths
+  - Configuration override attacks
+  - Privilege escalation in setuid programs
+fix: |
+  Safely use environment variables:
+
+  1. Validate with strict allowlists:
+  const char* val = getenv("CONFIG_PATH");
+  if (val && is_safe_path(val)) {  // Implement validation
+      use_path(val);
+  }
+
+  2. Use secure defaults:
+  const char* val = getenv("MODE");
+  const char* mode = (val && strcmp(val, "debug") == 0) ? "debug" : "production";
+
+  3. For C++, wrap in validation:
+  std::optional<std::string> get_env_validated(const char* name) {
+      const char* val = std::getenv(name);
+      if (!val || !is_safe(val)) return std::nullopt;
+      return std::string(val);
+  }
+
+  4. Never use in security-critical contexts:
+  - Don't trust PATH in setuid programs
+  - Don't use for authentication credentials
+  - Don't pass directly to shell commands
+education: |
+  **Why AI makes this mistake:**
+  AI uses getenv() unsafely because:
+  - Treats environment as trusted configuration
+  - Doesn't model attacker-controlled input
+  - Missing validation patterns in training data
+  - Unaware of setuid/privilege escalation risks
+
+  **Impact:**
+  Unsafe getenv() usage enables:
+  - Command injection via PATH, LD_PRELOAD
+  - Configuration override attacks
+  - Privilege escalation in setuid binaries
+  - CWE-426: Untrusted Search Path
+
+  **Best practice:**
+  Treat environment variables as untrusted user input. Validate with
+  strict allowlists. Never use in setuid/setgid programs.
+references:
+  - https://cwe.mitre.org/data/definitions/426.html
+  - https://wiki.sei.cmu.edu/confluence/display/c/ENV03-C

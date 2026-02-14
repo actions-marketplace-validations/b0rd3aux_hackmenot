@@ -1,0 +1,58 @@
+id: C_FN001
+name: Unsafe alloca()
+severity: high
+category: unsafe-functions
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "alloca"
+message: |
+  Use of alloca() detected. This function allocates memory on the stack with no
+  overflow protection, making it extremely dangerous.
+
+  alloca() risks:
+  - Stack overflow with no bounds checking
+  - No failure indication (crashes instead)
+  - Implementation-defined behavior
+  - Memory automatically freed (can't be explicitly freed)
+fix: |
+  Replace alloca() with safer alternatives:
+
+  1. Use std::vector for dynamic arrays:
+  std::vector<char> buf(size);  // Safe, heap-allocated
+
+  2. Use fixed-size stack arrays with size limits:
+  if (size <= MAX_STACK_SIZE) {
+      char buf[MAX_STACK_SIZE];
+  } else {
+      char* buf = malloc(size);  // Fall back to heap
+      // Remember to free()
+  }
+
+  3. Use malloc/free for truly dynamic sizes:
+  char* buf = malloc(size);
+  if (!buf) return -1;
+  // ... use buf ...
+  free(buf);
+education: |
+  **Why AI makes this mistake:**
+  AI suggests alloca() because:
+  - Appears in performance-critical legacy code
+  - "Automatic" cleanup seems convenient
+  - Training data doesn't emphasize security risks
+  - Doesn't reason about stack limits
+
+  **Impact:**
+  alloca() causes:
+  - Undetectable stack overflow (no size limit)
+  - Crashes with no error handling possible
+  - Security vulnerabilities in size calculations
+  - Portability issues (not standard C)
+
+  **Best practice:**
+  Never use alloca(). Use std::vector, std::array, or heap allocation
+  with proper size limits and error handling.
+references:
+  - https://wiki.sei.cmu.edu/confluence/display/c/MEM05-C.+Avoid+large+stack+allocations
