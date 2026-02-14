@@ -1,0 +1,69 @@
+id: C_INJ004
+name: Path Traversal
+severity: high
+category: injection
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "fopen"
+    - "open"
+    - "opendir"
+message: |
+  Potential path traversal vulnerability detected. Using untrusted input
+  in file paths can allow attackers to access arbitrary files.
+
+  Path traversal risks:
+  - Access to sensitive files (../../../etc/passwd)
+  - Overwriting critical files
+  - Directory listing attacks
+  - Information disclosure
+fix: |
+  Safely handle file paths:
+
+  1. Validate with allowlist of allowed paths:
+  bool is_safe_path(const char* path) {
+      // Check against allowlist
+      // Reject "..", absolute paths, etc.
+      return matches_allowlist(path);
+  }
+
+  2. Canonicalize paths and check containment:
+  char* resolved = realpath(path, NULL);
+  if (resolved && starts_with(resolved, SAFE_BASE_DIR)) {
+      // Path is safe
+      free(resolved);
+  }
+
+  3. For C++, use std::filesystem (C++17):
+  std::filesystem::path p = user_path;
+  p = std::filesystem::canonical(p);
+  if (p.string().starts_with(safe_base)) {
+      // Safe to use
+  }
+
+  4. Use path join functions, not concatenation:
+  // Use path_join() or std::filesystem::path / operator
+  // NOT: sprintf(full_path, "%s/%s", base, user_input)
+education: |
+  **Why AI makes this mistake:**
+  AI creates path traversal bugs because:
+  - Doesn't validate path components
+  - Trusts user-provided filenames
+  - Missing awareness of ".." and symlink risks
+  - Doesn't use canonical path checking
+
+  **Impact:**
+  Path traversal vulnerabilities enable:
+  - Reading sensitive system files
+  - Overwriting configuration files
+  - Arbitrary file access
+  - CWE-22: Path Traversal
+
+  **Best practice:**
+  Always canonicalize and validate paths. Use std::filesystem in C++.
+  Reject paths with "..", absolute paths, or that escape the allowed directory.
+references:
+  - https://cwe.mitre.org/data/definitions/22.html
+  - https://owasp.org/www-community/attacks/Path_Traversal

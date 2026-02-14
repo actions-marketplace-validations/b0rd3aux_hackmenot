@@ -1,0 +1,67 @@
+id: C_INJ002
+name: SQL Injection Risk
+severity: critical
+category: injection
+languages:
+  - cpp
+pattern:
+  type: string
+  contains:
+    - "SELECT"
+    - "INSERT"
+    - "UPDATE"
+    - "DELETE"
+message: |
+  Potential SQL injection detected. SQL queries built with string concatenation
+  can allow attackers to inject malicious SQL code.
+
+  SQL injection risks:
+  - Data theft and modification
+  - Authentication bypass
+  - Database server compromise
+  - Denial of service
+fix: |
+  Use parameterized queries to prevent SQL injection:
+
+  1. Use prepared statements (libpq, MySQL C API):
+  // PostgreSQL example
+  const char* params[1] = {user_id};
+  PGresult* res = PQexecParams(conn,
+      "SELECT * FROM users WHERE id = $1",
+      1, NULL, params, NULL, NULL, 0);
+
+  2. Use ORM libraries (recommended):
+  // Use C++ ORM like SOCI, ODB, or sqlpp11
+  soci::session sql(postgresql, "dbname=mydb");
+  int id = user_id;
+  sql << "SELECT * FROM users WHERE id = :id", soci::use(id);
+
+  3. Escape user input (less safe):
+  // Use database-specific escaping functions
+  char* escaped = PQescapeLiteral(conn, user_input, strlen(user_input));
+
+  4. Input validation with allowlists:
+  if (is_valid_id(user_id)) {  // Strict validation
+      // Build query
+  }
+education: |
+  **Why AI makes this mistake:**
+  AI creates SQL injection vulnerabilities because:
+  - String concatenation is simple and intuitive
+  - Training data shows unsafe query building
+  - Doesn't model attacker input in SQL context
+  - Parameterized queries require more setup code
+
+  **Impact:**
+  SQL injection is consistently in OWASP Top 10:
+  - Complete database compromise
+  - Authentication bypass
+  - Data exfiltration
+  - CWE-89: SQL Injection
+
+  **Best practice:**
+  Always use parameterized queries or ORMs. Never build SQL with
+  string concatenation of user input.
+references:
+  - https://cwe.mitre.org/data/definitions/89.html
+  - https://owasp.org/www-community/attacks/SQL_Injection

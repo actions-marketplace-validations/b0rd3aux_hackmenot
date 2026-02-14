@@ -1,0 +1,58 @@
+id: C_INJ003
+name: Format String Vulnerability
+severity: critical
+category: injection
+languages:
+  - cpp
+pattern:
+  type: call
+  names:
+    - "printf"
+    - "fprintf"
+    - "snprintf"
+    - "syslog"
+message: |
+  Potential format string vulnerability detected. Using untrusted input as
+  a format string enables arbitrary memory read/write attacks.
+
+  Format string risks:
+  - Arbitrary memory read (%x, %s)
+  - Arbitrary memory write (%n)
+  - Stack information disclosure
+  - Code execution via overwrite
+fix: |
+  Always use literal format strings:
+
+  1. Use format string literals:
+  printf("%s", user_input);  // Safe - user input is data, not format
+
+  2. For C++, use std::cout (recommended):
+  std::cout << user_input;  // No format string risk
+
+  3. Never do this:
+  printf(user_input);  // DANGEROUS - user controls format
+
+  4. For logging with syslog:
+  syslog(LOG_INFO, "%s", message);  // Safe
+  // NOT: syslog(LOG_INFO, message);  // Vulnerable
+education: |
+  **Why AI makes this mistake:**
+  AI creates format string bugs because:
+  - Passing strings directly to printf seems natural
+  - Training data shows convenience over security
+  - Doesn't understand format specifier risks
+  - Missing "%s" seems like extra typing
+
+  **Impact:**
+  Format string vulnerabilities enable:
+  - Arbitrary code execution
+  - Information disclosure
+  - Stack/heap memory corruption
+  - CWE-134: Format String Vulnerability
+
+  **Best practice:**
+  Always use "%s" when printing untrusted strings. In C++, prefer
+  std::cout or std::format which don't have format string risks.
+references:
+  - https://cwe.mitre.org/data/definitions/134.html
+  - https://owasp.org/www-community/attacks/Format_string_attack
