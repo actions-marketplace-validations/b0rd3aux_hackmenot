@@ -201,48 +201,124 @@ class SecurityGraphBuilder:
         return label.replace("<", "[").replace(">", "]")
 
     def to_dot(self) -> str:
-        """Generate GraphViz DOT format output.
+        """Generate GraphViz DOT format output with modern styling.
 
         Returns:
-            DOT format string.
+            DOT format string with beautiful modern design.
         """
         lines = []
+
+        # Modern graph settings with enhanced visual design
         lines.append("digraph security_graph {")
-        lines.append("  rankdir=LR;")
-        lines.append("  node [shape=box, style=filled];")
+        lines.append("  // Modern styling configuration")
+        lines.append("  graph [")
+        lines.append('    bgcolor="#1a1d2e",')
+        lines.append('    fontname="Helvetica Neue,Helvetica,Arial,sans-serif",')
+        lines.append("    fontsize=14,")
+        lines.append("    rankdir=LR,")
+        lines.append("    splines=curved,")
+        lines.append("    nodesep=1.2,")
+        lines.append("    ranksep=1.8,")
+        lines.append("    pad=0.5")
+        lines.append("  ];")
         lines.append("")
 
-        # Add nodes
-        lines.append("  // Entry Points")
+        # Modern node defaults
+        lines.append("  node [")
+        lines.append('    fontname="Helvetica Neue,Helvetica,Arial,sans-serif",')
+        lines.append("    fontsize=11,")
+        lines.append('    fontcolor="#ffffff",')
+        lines.append('    style="filled,rounded",')
+        lines.append("    penwidth=2,")
+        lines.append("    margin=0.3")
+        lines.append("  ];")
+        lines.append("")
+
+        # Modern edge defaults
+        lines.append("  edge [")
+        lines.append('    fontname="Helvetica Neue,Helvetica,Arial,sans-serif",')
+        lines.append("    fontsize=9,")
+        lines.append('    fontcolor="#95a5a6",')
+        lines.append("    penwidth=2.5,")
+        lines.append("    arrowsize=1.2")
+        lines.append("  ];")
+        lines.append("")
+
+        # Add entry point nodes with modern design
+        lines.append("  // Entry Points - Modern Design")
         for node in self.nodes:
             if node.type == "entry_point":
-                color = self._get_node_color(node.risk_level)
                 escaped_label = self._escape_label(node.label)
-                lines.append(
-                    f'  "{node.id}" [label="{escaped_label}", ' f'fillcolor="{color}", shape=box];'
+
+                # Determine colors based on risk
+                if node.risk_level == "critical":
+                    fillcolor = "#e74c3c:#c0392b"  # Red gradient
+                    color = "#c0392b"
+                elif node.risk_level == "high":
+                    fillcolor = "#e67e22:#d35400"  # Orange gradient
+                    color = "#d35400"
+                else:
+                    fillcolor = "#f39c12:#e67e22"  # Yellow-orange gradient
+                    color = "#e67e22"
+
+                node_def = (
+                    f'  "{node.id}" ['
+                    f'label="{escaped_label}", '
+                    f'fillcolor="{fillcolor}", '
+                    f'color="{color}", '
+                    "shape=box, "
+                    'style="filled,rounded,bold"'
+                    "];"
                 )
+                lines.append(node_def)
 
         lines.append("")
-        lines.append("  // Security Sinks")
+        lines.append("  // Security Sinks - Modern Design")
         for node in self.nodes:
             if node.type == "sink":
-                color = self._get_node_color(node.risk_level)
                 escaped_label = self._escape_label(node.label)
-                lines.append(
-                    f'  "{node.id}" [label="{escaped_label}", '
-                    f'fillcolor="{color}", shape=ellipse];'
+
+                # All sinks are critical - use red gradient
+                fillcolor = "#e74c3c:#c0392b"
+                color = "#c0392b"
+
+                node_def = (
+                    f'  "{node.id}" ['
+                    f'label="{escaped_label}", '
+                    f'fillcolor="{fillcolor}", '
+                    f'color="{color}", '
+                    "shape=ellipse, "
+                    'style="filled,bold"'
+                    "];"
                 )
+                lines.append(node_def)
 
         lines.append("")
-        lines.append("  // Data Flows")
+        lines.append("  // Data Flows - Modern Arrows")
         for edge in self.edges:
-            color = "red" if edge.is_vulnerable else "green"
-            style = "bold" if edge.is_vulnerable else "solid"
+            if edge.is_vulnerable:
+                # Vulnerable path - bright red
+                color = "#e74c3c"
+                style = "bold,dashed"
+                penwidth = "3.5"
+            else:
+                # Safe path - green
+                color = "#2ecc71"
+                style = "solid"
+                penwidth = "2.0"
+
             label = edge.label or ""
-            lines.append(
-                f'  "{edge.source}" -> "{edge.target}" '
-                f'[label="{label}", color="{color}", style={style}];'
+
+            edge_def = (
+                f'  "{edge.source}" -> "{edge.target}" ['
+                f'label="{label}", '
+                f'color="{color}", '
+                f'style="{style}", '
+                f"penwidth={penwidth}, "
+                "arrowhead=vee"
+                "];"
             )
+            lines.append(edge_def)
 
         lines.append("}")
         return "\n".join(lines)
